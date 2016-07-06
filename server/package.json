@@ -1,0 +1,14 @@
+{
+  "name": "demiot-server3",
+  "version": "1.0.0",
+  "description": "all pckages used are in /demiot/package.json and listed in package.in_demiot.json",
+  "main": "index.js",
+  "scripts": {
+    "start": "set NODE_ENV=development&& nodemon lib/index.js --watch lib",
+    "test": "mocha --require ./test/test_helper.js --recursive --slow 4",
+    "test:watch": "npm run test -- --watch"
+  },
+  "keywords": [],
+  "author": "Timothy S. McKenna <mckenna.tim@gmail.com> (http://mckennatim.github.io/mckennatim/)",
+  "license": "MIT"
+}
