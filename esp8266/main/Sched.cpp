@@ -25,7 +25,7 @@ bool Sched::deserialize(char* kstr){
   return root.success();
 }
 
-void Sched::actTime(STATE& st){
+void Sched::actTime(){
 	Serial.println(unix);
 	Serial.println(LLLL);
 	Serial.println(zone);
@@ -97,6 +97,35 @@ bool Sched::deseriProgs(char* kstr){
 	Serial.println(progs[1][1][2]);
   return rot.success();
 }
+
+void Sched::copyProg(prg_t& t, JsonArray& ev){
+  for(int h=0;h<ev.size();h++){
+    JsonArray& aprg = ev[h];
+    aprg.printTo(Serial);
+    for(int j=0;j<t.numdata+2;j++){
+      t.prg[h][j] = aprg[j];
+      Serial.print(t.prg[h][j]);
+    }
+  }        
+}
+
+void Sched::deseriProg(prgs_t& prgs, char* kstr){
+  StaticJsonBuffer<300> jsonBuffer;
+  JsonObject& rot = jsonBuffer.parseObject(kstr);
+  int id = rot["id"];
+  JsonArray& events = rot["pro"];
+  switch(id){
+   case 0:
+     copyProg(prgs.temp1, events);          
+     break;
+   case 1:
+     copyProg(prgs.temp2, events);          
+     break;
+   default:
+      Serial.println("in default");
+  }
+}
+
 
 //[CYURD001/progs] {"crement":5,"serels":[0,99,1,2],"progs":[[[0,0,80,77],[6,12,82,75],[8,20,85,75],[22,0,78,74],[23,30,85,75]],[[0,0,58],[18,0,68],[21,30,58]],[[0,0,0],[12,34,1],[12,37,0]]]}
 //var sched3 = "{\"crement"\:5,"serels\":[0,99,1,2],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,75],[22,0,78,74],[23,30,85,75]],[[0,0,58],[18,0,68],[21,30,58]],[[5,30,1],[6,10,0]]]}";

@@ -1,9 +1,3 @@
-// // #include <Dhcp.h>
-// // #include <Dns.h>
-// #include <Ethernet.h>
-// #include <EthernetClient.h>
-// #include <EthernetServer.h>
-// #include <EthernetUdp.h>
 
 #include "config.h"
 #include <EEPROM.h>
@@ -36,7 +30,7 @@ MQclient mq(devid);
 
 int NEW_ALARM = -1;
 int IS_ON = 0;
-STATE st {2, 5, 42, 38, 0, 82, 73, 1, 1, 0};
+//STATE st {2, 5, 42, 38, 0, 82, 73, 1, 1, 0};
 //{IO2D4, ALED, temp1, temp2, heat, hilimit, lolimit, AUTOMA,  HAY_CNG, }
 TMR tmr {0,0,0,3,5,0};
 //timr1, timr2, timr3, numtmrs, crement, IS_ON
@@ -55,9 +49,18 @@ void initState(){
   ste.temp1 = {1,94,77};
 }
 
+prgs_t prgs;
+void initProgs(){
+  prgs = {
+  {0,0,3,{{0,0,0,84,64}}},
+  {1,0,3,{{0,0,0,84,64}}},
+  {2,0,1,{{0,0,0}}},
+  {3,0,1,{{0,0,0}}},
+  {4,0,1,{{0,0,0}}}};
+}
 
-const int numcmds = 3;
-char incmd[][10]={"devtime", "progs", "cmd"};
+const int numcmds = 4;
+char incmd[][10]={"devtime", "progs", "cmd", "prog"};
 
 void acb(){
   int i=0;
@@ -76,23 +79,13 @@ void processInc(){
         case 0:
           Serial.println("in devtime");
           sched.deserialize(ipayload);
-          sched.actTime(st);
+          sched.actTime();
           break;            
         case 1:
-          Serial.println("in progs");
+          Serial.println("in sched");
           Serial.println(itopic);
           Serial.println(ipayload);
           sched.deseriProgs(ipayload);
-          //sched.bootstrapSched();
-          // for(int i = 0; i<sched.seresz; i++){
-          //   if (sched.senrels[i]<99){
-          //     int cur = 0;
-          //     sched.resetAlarm(i, cur);
-          //     sched.actProgs(i, cur, st, tmr);              
-          //   }
-          // }
-
-          // Alarm.alarmOnce(hour(), minute()+1,0,acb);
           NEW_MAIL=0;
           NEW_ALARM=31;
           IS_ON=31;
@@ -106,68 +99,22 @@ void processInc(){
           // cmd.act(st);
           cmd.deserialize2(ipayload,ste, po, tmr, f);
           break; 
+        case 3:
+          Serial.println(ipayload);
+          sched.deseriProg(prgs,ipayload);
+          NEW_MAIL=0;
+          break;
         default:           
           Serial.println("in default");
           break; 
       }
+    }else{
+      NEW_MAIL=0;
     }
   }
 }
 
-// void publishState(){
-//   char astr[160];
-//   sprintf(astr, "{\"temp1\":%d, \"temp2\":%d, \"heat\":%d, \"hilimit\":%d, \"lolimit\":%d, \"auto\":%d}", st.temp1, st.temp2, st.heat, st.hilimit, st.lolimit, st.AUTOMA);
-//   //char astr[120];
-//   //sprintf(astr, "{\"temp1\":%d, \"temp2\":%d, \"heat\":%d, \"hilimit\":%d, \"lolimit\":%d, \"auto\":%d}", st.temp1, st.temp2, st.heat, st.hilimit, st.lolimit, st.AUTOMA);
-//   char status[20];
-//   strcpy(status,devid);
-//   strcat(status,"/status");
-//   if (client.connected()){
-//     client.publish(status, astr, true);
-//   } 
-//   Serial.print(status);
-//   Serial.println(astr);
-// }
-// void publishState(int HC){
-//   char astr[120];
-//   switch(HC){
-//     case 0:
-//       sprintf(astr, "{\"id\":%d, \"darr\":[%d, %d, %d, %d]}", 0, ste.temp1.temp, ste.temp1.state, ste.temp1.hilimit, ste.temp1.lolimit);
-//       break;
-//     case 1:
-//       sprintf(astr, "{\"id\":%d, \"darr\":[%d, %d, %d, %d]}", 1, ste.temp2.temp, ste.temp2.state, ste.temp2.hilimit, ste.temp2.lolimit);
-//       break;
-//     case 2:
-//       sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 2, ste.timr1.state);
-//       break;
-//     case 3:
-//       sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 3, ste.timr2.state);
-//       break;
-//     case 4:
-//       sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 4, ste.timr3.state);
-//       break;
-//     case 5:
-//       sprintf(astr, "{\"id\":%d, \"data\":%d}", 5, ste.AUTOMA);
-//       break;
-//     case 6:
-//       sprintf(astr, "{\"id\":%d, \"data\":%d}", 6, ste.NEEDS_RESET);
-//       break;
-//     case 7:
-//       sprintf(astr, "{\"id\":%d, \"data\":%d}", 7, ste.sndSched);
-//       for (int i=0;i<7;i++){
-//         publishState(i);
-//       }
-//       break;
-//   }
-//   char status[20];
-//   strcpy(status,devid);
-//   strcat(status,"/status");
-//   if (client.connected()){
-//     client.publish(status, astr, true);
-//   } 
-//   Serial.print(status);
-//   Serial.println(astr);
-// }
+
 void clpub(char status[20], char astr[120]){
   if (client.connected()){
     client.publish(status, astr, true);
@@ -177,8 +124,8 @@ void clpub(char status[20], char astr[120]){
 }
 
 void publishState(int hc){
-  Serial.print("in publishState w: ");
-  Serial.println(hc);
+  // Serial.print("in publishState w: ");
+  // Serial.println(hc);
   char status[20];
   strcpy(status,devid);
   strcat(status,"/status");  
@@ -275,10 +222,6 @@ void controlHeat(){
   } 
 }
 
-// void cbtemp0(){
-//   Serial.println("triggered cbtemp0 callback");
-// }
-
 void setup(){
   Serial.begin(115200);
   EEPROM.begin(512);
@@ -287,6 +230,7 @@ void setup(){
   Serial.println("ESP8266 mqttdemo");
   Serial.println("--------------------------");
   initState();
+  initProgs();
   Serial.print(ste.temp1.state);
   Serial.print(ste.temp1.hilimit);
   Serial.print(ste.temp1.lolimit);
@@ -306,12 +250,6 @@ void setup(){
   digitalWrite(po.timr2, LOW);
   digitalWrite(po.timr3, LOW);
   req.stime();
-  
-  // Serial.println("should have time");
-  // Serial.print(hour());
-  // Serial.print(":"); 
-  // Serial.println(minute()); 
-  // Alarm.alarmOnce(hour(),minute()+1, 0, cbtemp0);
 }
 
 
@@ -324,11 +262,6 @@ void loop(){
   if(NEW_ALARM>0){
     sched.actProgs2(tmr, ste, f);
   }
-  // if(NEW_ALARM>-1){
-  //   int cur = 0;
-  //   sched.resetAlarm(NEW_ALARM, cur);
-  //   sched.actProgs(NEW_ALARM, cur, st, tmr);
-  // }
   Alarm.delay(100);
   server.handleClient();
   if(NEW_MAIL){

@@ -37,9 +37,13 @@ void MQclient::reconn(PubSubClient& client) {
     char progs[25];
     strcpy(progs, cdevid);
     strcat(progs,"/progs");
+    char prog[25];
+    strcpy(prog, cdevid);
+    strcat(prog,"/prog");
     client.subscribe(ccmd);
     client.subscribe(devt);
     client.subscribe(progs);
+    client.subscribe(prog);
     Serial.println(progs);
     return;
   } else {

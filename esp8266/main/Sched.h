@@ -6,6 +6,7 @@
 #include "TMR.h"
 #include <Arduino.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 void cbtmr1();
 void cbtmr2();
@@ -23,9 +24,12 @@ extern int IS_ON;
 class Sched{
 public:
 	bool deserialize(char* kstr); 
-	void actTime(STATE& st);
+	void actTime();
 	void printSched(int i);
 	bool deseriProgs(char* kstr); 
+	void copyProg(prg_t& t, JsonArray& ev);
+	//void copProg(prg_t& t, int ma[6][5], int evs);
+	void deseriProg(prgs_t& t, char* kstr); 
 	void bootstrapSched();
 	void resetAlarm(int i, int &cur, int &nxt);
 	void actProgs2(TMR& tmr, state_t& ste, flags_t& f);
