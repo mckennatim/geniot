@@ -71,8 +71,8 @@ var mq = {
         console.log("sched")
         sched.sendSchedule(this.devid, moserver, payload)
         break
-      case "dog":
-        console.log("dog")
+      case "srstate":
+        console.log("srstate")
         break
     }
   },

@@ -99,6 +99,7 @@ bool Sched::deseriProgs(char* kstr){
 }
 
 void Sched::copyProg(prg_t& t, JsonArray& ev){
+	t.ev=ev.size();
   for(int h=0;h<ev.size();h++){
     JsonArray& aprg = ev[h];
     aprg.printTo(Serial);

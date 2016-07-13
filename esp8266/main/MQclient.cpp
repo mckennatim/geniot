@@ -28,22 +28,30 @@ void MQclient::reconn(PubSubClient& client) {
   Serial.print("Attempting remo MQTT connection...");
   if (client.connect(cdevid)) {
     Serial.println("connected");
-    char ccmd[20];
-    strcpy(ccmd, cdevid);
-    strcat(ccmd,"/cmd");
-    char devt[25];
-    strcpy(devt, cdevid);
-    strcat(devt,"/devtime");
-    char progs[25];
+    char cmd[20];
+    strcpy(cmd, cdevid);
+    strcat(cmd,"/cmd");
+    char devtime[25];
+    strcpy(devtime, cdevid);
+    strcat(devtime,"/devtime");
+    char progs[25];//deprecated
     strcpy(progs, cdevid);
     strcat(progs,"/progs");
-    char prog[25];
-    strcpy(prog, cdevid);
-    strcat(prog,"/prog");
-    client.subscribe(ccmd);
-    client.subscribe(devt);
-    client.subscribe(progs);
-    client.subscribe(prog);
+    char prg[25];
+    strcpy(prg, cdevid);
+    strcat(prg,"/prg");
+    char req[25];
+    strcpy(req, cdevid);
+    strcat(req,"/req");
+    char set[25];
+    strcpy(set, cdevid);
+    strcat(set,"/set");
+    client.subscribe(set);
+    client.subscribe(cmd);
+    client.subscribe(devtime);
+    client.subscribe(progs);//deprecated
+    client.subscribe(prg);
+    client.subscribe(req);
     Serial.println(progs);
     return;
   } else {

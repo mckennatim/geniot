@@ -7,7 +7,8 @@
 
 class Cmd{
 public:
-	bool deserialize2(char* kstr, state_t& ste, PORTS& po, TMR& tmr, flags_t& f); 
+	bool deseriCmd(char* kstr, state_t& ste, PORTS& po, TMR& tmr, flags_t& f); 
+	bool deseriReq(char* kstr, flags_t& f);	
 private:
   bool heat;
   bool automa;

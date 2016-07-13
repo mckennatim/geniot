@@ -1,8 +1,208 @@
 # geniot
 A combination of cascada-mqtt and demiot. This one has the server. Its purpose is to create a general platform for iot on esp8266 over mqtt. It should be self sufficient using sbdev0's node_modules and everything should work. Currently 812K with no react code
 
-##tags
+<!-- MarkdownTOC -->
+
+- [markdown reminders](#markdown-reminders)
+- [tags](#tags)
+  - [03-refactoring continued](#03-refactoring-continued)
+  - [02-desiriProgs_copyProg](#02-desiriprogs_copyprog)
+    - [current prog operation in general](#current-prog-operation-in-general)
+    - [internals of actProgs2,resetAlarm](#internals-of-actprogs2resetalarm)
+    - [new version](#new-version)
+      - [flags](#flags)
+      - [loop](#loop)
+      - [init](#init)
+      - [processIncoming prg](#processincoming-prg)
+      - [sched.ckAlarms\(prgs_t& prgs, flags_t& f\)](#schedckalarmsprgs_t-prgs-flags_t-f)
+  - [how to pass a JsonArray& to a function](#how-to-pass-a-jsonarray-to-a-function)
+    - [ans](#ans)
+- [01-initial_commit](#01-initial_commit)
+    - [OK so what about overrides bud](#ok-so-what-about-overrides-bud)
+      - [take 1: random thoughts](#take-1-random-thoughts)
+- [Server](#server)
+
+<!-- /MarkdownTOC -->
+
+## markdown reminders
+[alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is markdown-preview and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
+[alt-c] tools/MarkdownTOC/update
+## tags
+### 03-refactoring continued
+esp8266 should be listening for
+* cmd that change the state
+* prg that changes a program
+* set that changes machine settings
+* req for info on ovstate, srstates, progs 
+* devtime to update time on device from server
+
+subscriptions are set in MQclient.cpp
+
+    ...
+    char req[25];
+    strcpy(req, cdevid);
+    strcat(req,"/req");
+    client.subscribe(cmd);
+    client.subscribe(devtime);
+    client.subscribe(progs);//deprecated
+    client.subscribe(prg);
+    client.subscribe(req);
+
+req
+`{\"id\":0, \"req\":"srstates"}`
+`{\"id\":1, \"req\":"progs"}`
+`{\"id\":2, \"req\":"flags"}`
+
+
+
+esp8266 should be publishing
+* srstates state of relays and sensors
+* srtate state of one senrel
+* progs all programs
+* prog of one senrel
+* ovstate general setting and state of flags
+
+again, what is the interaction between cmd and prg?
+[considering timer vs on/off for cascada][OK so what about overrides]
+
 ### 02-desiriProgs_copyProg
+OK so after a prog is writtens to progs, then what? How does it work now.
+
+#### current prog operation in general
+players 
+* flags: NEW_ALARM, and IS_ON (applies only to timers)
+* methods: deseriProgs, actProgs2 ,bm callbacks, updateTmrs
+
+Every time the programs are changed they are cleared with Alarm.clear().
+
+So every time I change on senrels program, I have to clear the alarms and reset the progs of all the other senrels too.
+
+NEW_ALARM = 31 tells asctProgs2 to intialize all 5 senrels. As each senrel is acted upon NEW_ALARM for that bit gets turned off. If an alarm has been set, its callback resets the NEW_ALARM (and IS_ON) bit so actProg2 can be called again. On every loop NEW_ALARM is checked.
+
+Also on every 5 (tmr.crement) seconds in the loop IS_ON is checked to see if timers are running. If so then updateTmrs is run.
+
+updateTimers is independent of actProgs2 and just takes 5 seconds off each running timr and sets a local var hi or low depending if timr still has time on it. If the relay is differrent from hl then it is switched.
+
+after and anytime update timers is run then tmr is published
+??? should IS_ON only be set for timrs or also for temp???
+temp is more autonomous and passive. It adds nothing to report that 'yep 4 hrs to go til the tstat is set at 64' every 5 seconds. 
+
+#### internals of actProgs2,resetAlarm
+
+Again actProgs run if NEW_ALARM bit flag is set for it and it is turned off right away. Then actProgs2 
+* checks the current time
+* calls resetAlarm(int i, int &cur, int &nxt) with a weird address of int parameter. It sends back the index of which event is is cur in and which event is nxt(or nxt=0 if no more events).
+* current settings are updated (things like himit, olimit, relay)
+* alarm is set with next values for hr, min and settings
+
+#### new version 
+sd
+##### flags
+
+    struct flags_t{
+      bool AUTOMA;
+      bool NEEDS_RESET;  
+      int crement;
+      int hastimr; //11100(28) 4,8, and 16 have timers not temp
+      int istimeron;//11100 assume some time left, timers with tleft>0 
+      int hayprog;// = senrels with events>0
+      int haystatecng; 11111(31 force report) some state change int or ext
+      int ckalarm; 11111 assume alarm is set at start
+      int isrelayon;// = summary of relay states  
+      int tleft[6];// =[0,0,56,0,0] timeleft in timrs
+    };
+    init {1,0,5,28,28,0,31,0,{0,0,0,0,0}}
+
+##### loop
+
+    time_t before = 0;
+    time_t schedcrement = 0;
+    time_t inow;
+    if (f.ckalarms>0){
+      sched.ckAlarms(); //whatever gets scheduled should publish its update
+      pubFlags();
+    }
+    inow = millis();
+    if(inow-schedcrement > f.crement*1000){
+      schedcrement = inow;
+      if(f.istimeron > 0){
+        sched.updTimers();
+        pubFlags();
+      }
+    }
+    if (f.haystatecng>0){
+      pubState(f.haystatecng)
+    }    
+
+##### init
+
+    struct prg_t{
+      int id;
+      AlarmId aid;
+      int ev;
+      int numdata;
+      int prg[6][5];//max 6 events [hr,min,max 3 data]
+    };   
+
+    struct prgs_t{
+      prg_t temp1;
+      prg_t temp2;
+      prg_t timr1;
+      prg_t timr2;
+      prg_t timr3;
+    };
+
+    prgs_t prgs;
+    void initProgs(){
+      prgs = {
+      {1,255,0,3,{}},
+      {2,255,0,1,{}},
+      {3,255,0,1,{}},
+      {4,255,0,1,{}}};
+      {0,255,0,3,{}},
+      f = {1,0,5,28,0,31,31,0,{0,0,0,0,0}}
+    } 
+
+##### processIncoming prg   
+
+        case 2://in prg
+          Serial.println(ipayload);
+          sched.deseriProg(prgs,ipayload);
+          NEW_MAIL =0;
+          break;
+
+`case ` deseriProg might change prgs.timr2.prg to `{2,255,2,1,{{12,57,1}, 14,20,0}}` and then set `f.ckalarms=f.ckalarms | 4`
+
+on next loop sched.checkAlarms() get run
+
+##### sched.ckAlarms(prgs_t& prgs, flags_t& f)
+    {
+      if((f.ckalarms & 4) == 4){
+        f.ckalarms=f.ckalarms & 27; //11011 turnoff ckalarms for 4
+        int cur, nxt;
+        setCur(prgs.timr2, cur, nxt);
+        if ((f.isrelayon & 4) ==4){ //if relay is on
+
+        }
+      }
+    }
+
+
+    prgs = {
+      {0,255,0,3,{}},
+      {1,255,0,3,{}},
+      {2,255,2,1,{{12,57,1}, 14,20,0}},//2events turn on for some time then off
+      {3,255,0,1,{}},
+      {4,255,0,1,{}}};
+    }
+    
+
+How do you clear just the alarm for the senrel you are (re)programming?
+Include a AlarmId aid in prgs_t structure, store an AlarmId in progs.tmr1.aid,
+then free(progs.tmr1.aid) and prgs.tmr1.aid = dtINVALID_ALARM_ID; whenever we set it.
+
+How does it work? 
+
 todo: add cmd to report out prog values
 
 had some linking troubles that were actually about neglecting to put `Sched::` in front of `copyProg()`
@@ -214,10 +414,10 @@ parsing that would
 * 
 
 fix one command
-## 01-initial_commit
+## [01-initial_commit](#01-initial_commit)
 
 
-OK so what about overrides
+#### OK so what about overrides bud
 * a boost is OK, it just fits into the daily program
 * a hold sets a value and wipes out (1 or more) days program
 * bridge on wipes out the program and sets the relay on
@@ -271,7 +471,7 @@ or
 
 
 
-#####take 1: random thoughts
+##### take 1: random thoughts
 If there are no programs it should run and be OK.
 If there are it should deal. any time a program comes in it should be stored, published and actedON.
 
@@ -314,7 +514,7 @@ updateTimers changes IS_ON
 
 
 
-###Server 
+## Server 
 * is mirrored on sitebuilt.net /var/www/geniot/server/lib 
 
 `forever start ./appsServers2start.json`

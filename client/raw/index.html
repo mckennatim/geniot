@@ -24,7 +24,7 @@
 	<button id="button" onclick="acmd()">one command</button>
 	<button id="button" onclick="aprg()">one prog</button><br>
 	<button id="button" onclick="uclicked()">toggle device</button>
-	<button id="button3" onclick="devtime()">devtime</button>
+	<button id="button3" onclick="trigTimeUpd()">trigger time upd</button>
 	<button id="button3" onclick="sendSchedule()">send schedule</button>
 	<button id="button3" onclick="send1Schedule()">send 1 schedule</button><br>
 	<button id="button3" onclick="pubState()">publish state</button><br>
@@ -56,22 +56,27 @@
 	<script>
 		var dev = document.getElementById("idev")
 		//const deviceId ='CYURD002'
-		var tmr, progs, cmd, devt, devtim, sched, client;
+		var tmr, progs, cmd, prg, req, trigtime, devtime, sched, client;
 		function devChanged(){
 			var deviceId = dev.value
-			statu = deviceId+'/status'
+			//publish to device
+			prg = deviceId+'/prg'
+			cmd = deviceId +'/cmd'
+			req = deviceId +'/req'
+			//publish to server
+			trigtime = deviceId +'/time'
+			//subscribe
+			devtime = deviceId +'/devtime'
+			srstate = deviceId+'/srstate'
+			//deprecate
 			tmr = deviceId+'/tmr'
 			progs = deviceId+'/progs'
-			prog = deviceId+'/prog'
-			cmd = deviceId +'/cmd'
-			devt = deviceId +'/time'
-			devtim = deviceId +'/devtime'
 			sched = deviceId +'/sched'
 			client = mqtt.connect('ws://162.217.250.109:3333')
 			client.on('connect', function(){
 				console.log('maybe connected')
-				client.subscribe(devtim)
-				client.subscribe(statu) 
+				client.subscribe(devtime)//device time
+				client.subscribe(srstate) 
 				client.subscribe(tmr) 
 				client.subscribe(progs)
 				client.on('message', function(topic, payload) {
@@ -82,7 +87,7 @@
 			    var sp = topic.split("/")
 			    var job = sp[1];	
 			    switch(job){
-			    	case "status":
+			    	case "srstate":
 							document.getElementById('lue').innerHTML=plo.heat
 							document.getElementById('temp1').innerHTML=plo.temp1
 							break;
@@ -140,24 +145,27 @@
 		}
 		function aprg(){
 			var thecmd =  `{\"id\":0, \"pro\":[[0,0,0,84,64],[6,30,1,84,70]]}`	
-			console.log(prog)
+			console.log(prg)
 			console.log(thecmd)		
-			client.publish(prog, thecmd)
+			client.publish(prg, thecmd)
 		}
 		function pubState(){
 			var thecmd =  `{\"id\":7,\"data\":1}`
-			client.publish(cmd, thecmd);
+			//client.publish(cmd, thecmd);
+			// var areq = `{\"id\":0, \"req\":"srstates"}`
+			var areq = `{\"id\":1, \"req\":"progs"}`
+			client.publish(req, areq);
 		}
 		function empty(){
 			var thecmd =  "{\"heat\":"+onoff*1+",\"auto\":1,\"hilimit\":85,\"lolimit\":75,\"empty\":1}"
 			console.log(thecmd);
 			client.publish(cmd, thecmd)			
 		}
-		function devtime(){
-			var thecmd =  "trigger time from web cliient"
+		function trigTimeUpd(){
+			var thecmd =  "trigger time upd from server to esp"
 			console.log(thecmd);
-			console.log(devt);
-			client.publish(devt, thecmd)			
+			console.log(trigtime);
+			client.publish(trigtime, thecmd)			
 		}
 		function vchanged(){
 			//console.log("val changed")

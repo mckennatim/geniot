@@ -16,6 +16,8 @@
 #include "Reqs.h"
 #include "Sched.h"
 
+Cmd cmd;
+
 PORTS po {5, 16, 15, 13, 12, 4, 14};
 #define ONE_WIRE_BUS po.ds18b20 
 
@@ -52,15 +54,15 @@ void initState(){
 prgs_t prgs;
 void initProgs(){
   prgs = {
-  {0,0,3,{{0,0,0,84,64}}},
-  {1,0,3,{{0,0,0,84,64}}},
-  {2,0,1,{{0,0,0}}},
-  {3,0,1,{{0,0,0}}},
-  {4,0,1,{{0,0,0}}}};
+  {0,255,0,3,{}},
+  {1,255,0,3,{}},
+  {2,255,0,1,{}},
+  {3,255,0,1,{}},
+  {4,255,0,1,{}}};
 }
 
 const int numcmds = 4;
-char incmd[][10]={"devtime", "progs", "cmd", "prog"};
+char incmd[][10]={"devtime", "cmd", "prg", "req", "set," "progs"};
 
 void acb(){
   int i=0;
@@ -82,7 +84,22 @@ void processInc(){
           sched.actTime();
           break;            
         case 1:
-          Serial.println("in sched");
+          Serial.println("in cmd");
+          cmd.deseriCmd(ipayload,ste, po, tmr, f);
+          break; 
+        case 2://in prg
+          Serial.println(ipayload);
+          sched.deseriProg(prgs,ipayload);
+          NEW_MAIL=0;
+          break;
+        case 3:// in req
+          cmd.deseriReq(ipayload, f);
+          break; 
+        case 4:
+          Serial.println("in set");
+          break; 
+        case 5:
+          Serial.println("in sched");//deprecated
           Serial.println(itopic);
           Serial.println(ipayload);
           sched.deseriProgs(ipayload);
@@ -92,18 +109,6 @@ void processInc(){
           Alarm.clear();
           sched.actProgs2(tmr, ste, f);
           break;            
-        case 2:
-          Serial.println("in cmd");
-          Cmd cmd;
-          // cmd.deserialize(ipayload);
-          // cmd.act(st);
-          cmd.deserialize2(ipayload,ste, po, tmr, f);
-          break; 
-        case 3:
-          Serial.println(ipayload);
-          sched.deseriProg(prgs,ipayload);
-          NEW_MAIL=0;
-          break;
         default:           
           Serial.println("in default");
           break; 
@@ -126,43 +131,43 @@ void clpub(char status[20], char astr[120]){
 void publishState(int hc){
   // Serial.print("in publishState w: ");
   // Serial.println(hc);
-  char status[20];
-  strcpy(status,devid);
-  strcat(status,"/status");  
+  char srstate[20];
+  strcpy(srstate,devid);
+  strcat(srstate,"/srstate");  
   char astr[120];
   //sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 3, ste.timr2.state);
   if((hc & 1) == 1){
     sprintf(astr, "{\"id\":%d, \"darr\":[%d, %d, %d, %d]}", 0, ste.temp1.temp, ste.temp1.state, ste.temp1.hilimit, ste.temp1.lolimit);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 2) == 2){
     sprintf(astr, "{\"id\":%d, \"darr\":[%d, %d, %d, %d]}", 1, ste.temp2.temp, ste.temp2.state, ste.temp2.hilimit, ste.temp2.lolimit);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 4) == 4){
     sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 2, ste.timr1.state);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 8) == 8){
     sprintf(astr, "{\"id\":%d, \"darr\":[%d]}", 3, ste.timr2.state);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 16) == 16){
     sprintf(astr,   "{\"id\":%d, \"darr\":[%d]}", 4, ste.timr3.state);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 32) == 32){
     sprintf(astr, "{\"id\":%d, \"data\":%d}", 5, ste.AUTOMA);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc & 64) == 64){
     sprintf(astr, "{\"id\":%d, \"data\":%d}", 6, ste.NEEDS_RESET);
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
   if((hc &128) == 128){
     sprintf(astr, "{\"id\":%d, \"data\":%d}", 7, ste.sndSched);
     publishState(127);//11111111
-    clpub(status, astr);
+    clpub(srstate, astr);
   }
 }
 
