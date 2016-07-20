@@ -1,34 +1,132 @@
+
 # geniot
 A combination of cascada-mqtt and demiot. This one has the server. Its purpose is to create a general platform for iot on esp8266 over mqtt. It should be self sufficient using sbdev0's node_modules and everything should work. Currently 812K with no react code
 
-<!-- MarkdownTOC -->
-
-- [markdown reminders](#markdown-reminders)
-- [tags](#tags)
-  - [03-refactoring continued](#03-refactoring-continued)
-  - [02-desiriProgs_copyProg](#02-desiriprogs_copyprog)
-    - [current prog operation in general](#current-prog-operation-in-general)
-    - [internals of actProgs2,resetAlarm](#internals-of-actprogs2resetalarm)
-    - [new version](#new-version)
-      - [flags](#flags)
-      - [loop](#loop)
-      - [init](#init)
-      - [processIncoming prg](#processincoming-prg)
-      - [sched.ckAlarms\(prgs_t& prgs, flags_t& f\)](#schedckalarmsprgs_t-prgs-flags_t-f)
-  - [how to pass a JsonArray& to a function](#how-to-pass-a-jsonarray-to-a-function)
-    - [ans](#ans)
-- [01-initial_commit](#01-initial_commit)
-    - [OK so what about overrides bud](#ok-so-what-about-overrides-bud)
-      - [take 1: random thoughts](#take-1-random-thoughts)
-- [Server](#server)
-
-<!-- /MarkdownTOC -->
+[TOC]
 
 ## markdown reminders
-[alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is markdown-preview and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
-[alt-c] tools/MarkdownTOC/update
+[alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
+[alt-c] tools/MarkdownTOC/update</s>
 ## tags
-### 03-refactoring continued
+### 04-ckAlarms-pubProg-in-test.ino
+### 03-refactoring-continued
+#### on the interaction between progs and srstate
+example state:  
+
+    {id:0,darr:[temp,state,hilimit,lolimit]}
+    {id:2,darr:[state]}
+
+example prg:
+
+     {id:0, id:255, ev:2, numdata:2, prg:[[6,39,92,64], [8,45,87,87]]}   
+     {id:2, id:255, ev:2, numdata:1, prg:[[6,39,1], [8,45,0]]} 
+##### option-require prg:[0,0,def[0],def[1]]
+Require client to provide current defaults in the form of
+
+     {id:0, id:255, ev:3, numdata:2, prg:[[0,0,84,72], [6,39,92,64], [8,45,87,87]]}   
+     {id:2, id:255, ev:3, numdata:1, prg:[[0,0,1], [6,39,1], [8,45,0]]} 
+###### ckAlarms()(3)
+    void sched::ckAlarms(prgs_t& prgs, flags_t& f, state_t& state)    {
+      if((f.CKaLARM & 4) == 4){
+        f.CKaLARM=f.CKaLARM & 27; //11011 turnoff CKaLARM for 4
+        prg_t& p = progs.timr2;
+        tmr_t& s = state.timr2;
+        int id =2;
+        int bit =4
+        int cur, nxt;
+        setCur(p.prg, cur, nxt);
+        int tleft=0;
+        //for timers
+        s.state = p[cur][2];
+        f.ISrELAYoN = f.ISrELAYoN | s.state;
+        if (s.state){ //if relay is on
+           setTleft(p, cur, nxt, tleft)
+           f.IStIMERoN = f.IStIMERoN | bit;
+        }
+        f.tIMElEFT[id]=tleft;
+        int asec = second()+1;        
+        Alarm.alarmOnce(p[nxt][0],p[nxt][1], asec, bm8);        
+      }
+    }
+####### calculating tleft
+Is it from current time to next program if relay is on? If nxt=0 is it from current time til midnight? 
+
+    void sched::setTleft(prg_t p, int cur, int nxt, int &tleft){
+      int hr = hour();
+      int min - minute();
+      if(nxt==0){
+        tleft = (23-hr)*60+(59-min) +1;
+      }else{
+        int nxthr = p.prg[nxt][0];
+        int nxtmin = p.prg[nxt][1];
+        if(nxtmin < min){//12:25 -> 14:05
+          nxtmin=nxtmin+60
+          nxthr--;
+      }
+      tleft= (nxthr-hr)*60 + (nxtmin - min)
+    }
+    void sched::setCur(prg_t& p, int &cur, int &nxt){
+      for(int j=0; j<p.ev;j++){
+        if (hour() == p.prg[j][0]){
+          if (minute() < p.prg[j][1]){
+            cur = j-1;
+            break;
+          }
+        }
+        if (hour() < p.prg[j][0]){
+          cur= j-1;
+          break;
+        }
+        cur =j;
+      }
+      nxt = cur+1;
+      if (nxt>=p.ev){
+        nxt=0;
+      }        
+    }
+##### option-patch in for 00:00     
+
+Should there be defaults or yesterdays? `{id:0,def:[hilimit, lolimit]}`,  `{id:2,[relay]}`? How would it work? Insert
+
+[
+[0,0,defhi,deflo],
+[6,39,92,64], 
+[8,45,87,87],
+[23,59,defhi,deflo]] 
+
+[functions used](#loop) are `ckAlarms(), pubFlags(), pubState(), updTimers(), desiriProg(), copyProg(), setCur(), pubPrg()`
+
+###### ckAlarms()(2)
+   
+
+    void sched::ckAlarms(prgs_t& prgs, flags_t& f, state_t& state)    {
+      if((f.ckalarms & 4) == 4){
+        f.ckalarms=f.ckalarms & 27; //11011 turnoff ckalarms for 4
+        prg_t p = progs.timr2&;
+        tmr_t s = state.timr2&;
+        int id =2;
+        int bit =4
+        int arr[p.ev+2][p.numdata+1];
+        arr[0]=[0,0,s.def[0],s.def[1]];
+        for (int i=0; i<p.ev;i++){
+          arr[i+1]=p[i];
+        }
+        int cur, nxt;
+        setCur(arr, cur, nxt);
+        int tleft=0;
+        //for timers
+        s.state = p[cur][2];
+        if (s.state){ //if relay is on
+           setTleft(arr, cur, nxt, tleft)
+           f.IStIMERoN = f.IStIMERoN | bit;
+        }
+        f.tIMElEFT[id]=tleft;
+        int asec = second()+1;        
+        Alarm.alarmOnce(p[nxt][0],p[nxt][1], asec, bm8);        
+      }
+    }
+
+
 esp8266 should be listening for
 * cmd that change the state
 * prg that changes a program
@@ -69,9 +167,10 @@ again, what is the interaction between cmd and prg?
 OK so after a prog is writtens to progs, then what? How does it work now.
 
 #### current prog operation in general
-players 
-* flags: NEW_ALARM, and IS_ON (applies only to timers)
-* methods: deseriProgs, actProgs2 ,bm callbacks, updateTmrs
+players
+
+- flags: NEW_ALARM, and IS_ON (applies only to timers)
+- methods: deseriProgs, actProgs2 ,bm callbacks, updateTmrs
 
 Every time the programs are changed they are cleared with Alarm.clear().
 
@@ -100,16 +199,17 @@ sd
 ##### flags
 
     struct flags_t{
-      bool AUTOMA;
-      bool NEEDS_RESET;  
-      int crement;
-      int hastimr; //11100(28) 4,8, and 16 have timers not temp
-      int istimeron;//11100 assume some time left, timers with tleft>0 
-      int hayprog;// = senrels with events>0
-      int haystatecng; 11111(31 force report) some state change int or ext
-      int ckalarm; 11111 assume alarm is set at start
-      int isrelayon;// = summary of relay states  
-      int tleft[6];// =[0,0,56,0,0] timeleft in timrs
+      bool aUTOMA;
+      bool fORCErESET;  
+      int cREMENT;
+      int HAStIMR; //11100(28) 4,8, and 16 have timers not temp
+      int IStIMERoN;//11100 assume some time left, timers with tleft>0 
+      int HAYpROG;// = senrels with events>1
+      int HAYpROGcNG;// 11111(31 force report) some prog change int or ext
+      int HAYsTATEcNG; 11111(31 force report) some state change int or ext
+      int CKaLARM; 11111 assume alarm is set at start
+      int ISrELAYoN;// = summary of relay states  
+      int tIMElEFT[6];// =[0,0,56,0,0] timeleft in timrs
     };
     init {1,0,5,28,28,0,31,0,{0,0,0,0,0}}
 
@@ -118,20 +218,21 @@ sd
     time_t before = 0;
     time_t schedcrement = 0;
     time_t inow;
-    if (f.ckalarms>0){
+    if (f.CKaLARM>0){
       sched.ckAlarms(); //whatever gets scheduled should publish its update
       pubFlags();
+      pubPrg(f.CKaLARM);
     }
     inow = millis();
-    if(inow-schedcrement > f.crement*1000){
+    if(inow-schedcrement > f.cREMENT*1000){
       schedcrement = inow;
-      if(f.istimeron > 0){
+      if(f.IStIMERoN > 0){
         sched.updTimers();
         pubFlags();
       }
     }
-    if (f.haystatecng>0){
-      pubState(f.haystatecng)
+    if (f.HAYsTATEcNG>0){
+      pubState(f.HAYsTATEcNG)
     }    
 
 ##### init
@@ -175,14 +276,13 @@ sd
 
 on next loop sched.checkAlarms() get run
 
-##### sched.ckAlarms(prgs_t& prgs, flags_t& f)
-    {
+##### sched::ckAlarms(prgs_t& prgs, flags_t& f)
+    void sched::ckAlarms(prgs_t& prgs, flags_t& f)    {
       if((f.ckalarms & 4) == 4){
         f.ckalarms=f.ckalarms & 27; //11011 turnoff ckalarms for 4
         int cur, nxt;
         setCur(prgs.timr2, cur, nxt);
-        if ((f.isrelayon & 4) ==4){ //if relay is on
-
+        if ((f.ISrELAYoN & 4) ==4){ //if relay is on
         }
       }
     }
@@ -234,83 +334,13 @@ had some linking troubles that were actually about neglecting to put `Sched::` i
           Serial.println("in default");
       }
     }
-### how to pass a JsonArray& to a function
-give an input`{"id": 0, "pro":[[0,0,0,84,64],[6,30,1,84,70]]}`
-
-I would like to have my function that decodes the input to be able to call a function with a signature something like this 
-`void copyProg(prg_t& t, JsonArray& ev)`
-
-I can hardcode it without a function call and it works fine. Once I have `id` I'd like to copy the `pro` array into id=0's data structure. 
-
-    void Sched::deseriProg(prgs_t& prgs, char* kstr){
-      StaticJsonBuffer<300> jsonBuffer;
-      JsonObject& rot = jsonBuffer.parseObject(kstr);
-      int id = rot["id"];
-      JsonArray& events = rot["pro"];
-      for(int h=0;h<events.size();h++){
-        JsonArray& aprg = events[h];
-        aprg.printTo(Serial);
-        for(int j=0;j<prgs.temp1.numdata+2;j++){
-          prgs.temp1.prg[h][j] = aprg[j];
-          Serial.print(prgs.temp1.prg[h][j]);
-        }
-      }
-
-But when I try to pull the loop into a function
-
-    void copyProg(prg_t& t, JsonArray& ev){
-      for(int h=0;h<ev.size();h++){
-        JsonArray& aprg = ev[h];
-        for(int j=0;j<t.numdata+2;j++){
-          t.prg[h][j] = aprg[j];
-        }
-      }        
-    }
-
-and call it from here
-
-    void Sched::deseriProg(prgs_t& prgs, char* kstr){
-      StaticJsonBuffer<300> jsonBuffer;
-      JsonObject& rot = jsonBuffer.parseObject(kstr);
-      int id = rot["id"];
-      JsonArray& events = rot["pro"];
-      switch(id){
-       case 0:
-         copyProg(prgs.temp1, events);          
-         break;
-       case 1:
-         copyProg(prgs.temp2, events);          
-         break;
-       ...
-       default:
-          Serial.println("in default");
-      }     
-
-I get errors compiling with 1.67 on esp8266 Wemos D1 mini
-
-    sketch\Sched.cpp.o: In function `Sched::printSched(int)':
-    sketch/Sched.cpp:502: undefined reference to `Sched::copyProg(prg_t&, ArduinoJson::JsonArray&)'
-
-    sketch\Sched.cpp.o: In function `get<int>':
-
-    sketch/Sched.cpp:502: undefined reference to `Sched::copyProg(prg_t&, ArduinoJson::JsonArray&)'
-
-    collect2.exe: error: ld returned 1 exit status
-
-I am sure this is my issue in not understanding `JsonArray&` but still I'd love some help.    
-#### ans
-It looks like you are having a linking error which is probably unrelated to JsonArray itself. The line:
-
-sketch/Sched.cpp:502: undefined reference to `Sched::copyProg(prg_t&, ArduinoJson::JsonArray&)'
-indicates that the Arduino compiler thinks that you should have declared a function with the signature
-Sched::copyProg(prg_t&, ArduinoJson::JsonArray&) but it was unable to find it in your code. There could be many reasons for this.
-
-For example:
-1) Your copyProg function was included in the class Sched declaration, but was defined as a standalone function (the compiler wants to use Sched::copyProg(), but you defined copyProg()).
-2) Your copyProg function has a slightly different signature than the one that you called (perhaps one of the types was slightly mismatched).
-
-Here is some more information on undefined reference errors:
+#### how to pass a JsonArray& to a function
+##### ans
+Don't forget to define the function as sched::the function() in the .cpp file
 https://latedev.wordpress.com/2014/04/22/common-c-error-messages-2-unresolved-reference/
+
+#### initial thoughts on design of deseriProg() and copyProg()
+
 So there is a data structure for a prog getting sent into the device
 
     {"id": 0, "pro":[[0,0,0,84,64],[6,30,1,84,70]]}
@@ -322,14 +352,15 @@ each day there is are new progs sent in
 a flag is set if a senrel has a prog
 
 progs comming in are deseralized and sent to the proper struct (cmd and status are doing this like so)
-Pkt CYURD002/status {"id":0, "darr":[-196, 1, 1073681984, 1075879113]}
-Pkt CYURD002/status {"id":1, "darr":[-196, 0, 90, 60]}
-Pkt CYURD002/status {"id":2, "darr":[0]}
-Pkt CYURD002/status {"id":3, "darr":[0]}
-Pkt CYURD002/status {"id":4, "darr":[1]}
-Pkt CYURD002/status {"id":5, "data":1}
-Pkt CYURD002/status {"id":6, "data":0}
-Pkt CYURD002/status {"id":7, "data":0}
+
+    Pkt CYURD002/status {"id":0, "darr":[-196, 1, 1073681984, 1075879113]}
+    Pkt CYURD002/status {"id":1, "darr":[-196, 0, 90, 60]}
+    Pkt CYURD002/status {"id":2, "darr":[0]}
+    Pkt CYURD002/status {"id":3, "darr":[0]}
+    Pkt CYURD002/status {"id":4, "darr":[1]}
+    Pkt CYURD002/status {"id":5, "data":1}
+    Pkt CYURD002/status {"id":6, "data":0}
+    Pkt CYURD002/status {"id":7, "data":0}
 
 so a prog looks like this 
 
@@ -360,7 +391,7 @@ so a prog looks like this
     {"id": 0, "pro":[[0,0,0,84,64],[6,30,1,84,70]]}
     {"id": 2, "pro":[[0,0,0],[6,30,1]]}
 
-proof of concept step1
+##### proof of concept step1
 
     void Sched::deseriProg(prgs_t& prgs, char* kstr){
       StaticJsonBuffer<300> jsonBuffer;
@@ -414,7 +445,7 @@ parsing that would
 * 
 
 fix one command
-## [01-initial_commit](#01-initial_commit)
+### 01-initial_commit
 
 
 #### OK so what about overrides bud

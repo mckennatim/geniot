@@ -27,7 +27,12 @@
 	<button id="button3" onclick="trigTimeUpd()">trigger time upd</button>
 	<button id="button3" onclick="sendSchedule()">send schedule</button>
 	<button id="button3" onclick="send1Schedule()">send 1 schedule</button><br>
-	<button id="button3" onclick="pubState()">publish state</button><br>
+	Request info from device
+<select id="req" onclick="selChanged()">
+  <option value="0" selected="selected">srstates</option>
+  <option value="1" >progs</option>
+  <option value="2">flags</option>
+</select><br>
 	with timer1 starting in 
 	<input type="text" id="mbox1" value=0 size="2" onchange="mchanged()">
 	min and going for 
@@ -115,6 +120,7 @@
 		var onof = document.getElementById("onoff")
 		var srid = document.getElementById("srid")
 		var srda = document.getElementById("srda")
+		var dreq = document.getElementById("req")
 		var crement=10;
 		//console.log(v.value)
 
@@ -150,11 +156,18 @@
 			client.publish(prg, thecmd)
 		}
 		function pubState(){
-			var thecmd =  `{\"id\":7,\"data\":1}`
-			//client.publish(cmd, thecmd);
-			// var areq = `{\"id\":0, \"req\":"srstates"}`
-			var areq = `{\"id\":1, \"req\":"progs"}`
-			client.publish(req, areq);
+			var id = dreq.options[dreq.selectedIndex].value; 
+			var txt = dreq.options[dreq.selectedIndex].text; 
+			var thecmd =  `{\"id\":${id},\"req\":\"${txt}\"}`
+			console.log(thecmd)
+			client.publish(req, thecmd);
+		}
+		function selChanged(){
+			var id = dreq.options[dreq.selectedIndex].value; 
+			var txt = dreq.options[dreq.selectedIndex].text; 
+			var thecmd =  `{\"id\":${id},\"req\":\"${txt}\"}`
+			console.log(thecmd)
+			client.publish(req, thecmd);
 		}
 		function empty(){
 			var thecmd =  "{\"heat\":"+onoff*1+",\"auto\":1,\"hilimit\":85,\"lolimit\":75,\"empty\":1}"

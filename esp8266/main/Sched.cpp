@@ -123,7 +123,7 @@ void Sched::deseriProg(prgs_t& prgs, char* kstr){
      copyProg(prgs.temp2, events);          
      break;
    default:
-      Serial.println("in default");
+      Serial.println("in default desiriProg");
   }
 }
 
@@ -432,29 +432,6 @@ void Sched::updateTmrs(TMR& tmr, PubSubClient& client, PORTS& po, state_t& ste, 
 	// Serial.println(" seconds pass");
 }
 
-// void cbtmr1(){
-// 	Serial.println("in cbtmr1");
-// 	NEW_ALARM=2;
-// }
-// void cbtmr2(){
-// 	Serial.println("in cbtmr2");
-// 	NEW_ALARM=3;
-// }
-// void cbtemp1(){
-// 	Serial.println("in cbtemp1");
-// 	NEW_ALARM=0;
-// }
-
-// void abdd(){
-// 	Serial.println("in abdd");
-//   int i=0;
-//   switch(i){
-//     case 0:
-//       // Serial.println("TING TING TING");
-//       // Alarm.alarmOnce(hour(), minute()+1,0,abdd);
-//       NEW_ALARM=4;
-//   }	
-// }
 
 void bm32(){
 	Serial.print("mask with 32 begets: ");
