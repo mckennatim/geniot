@@ -15,6 +15,8 @@ char * schedArr[]={"temp1","temp2","tmr1","tmr2","tmr3"};
 //int NEW_ALARM = -1;
 int progs[8][8][6]={0};
 
+extern prgs_t prgs;
+
 bool Sched::deserialize(char* kstr){
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(kstr);
@@ -455,6 +457,7 @@ void bm4(){
 	Serial.print("timr1 4 begets: ");
 	NEW_ALARM = NEW_ALARM | 4;
 	IS_ON = IS_ON | 4;
+	Serial.print(prgs.timr1.aid);
 	Serial.println(NEW_ALARM);
 }
 void bm2(){

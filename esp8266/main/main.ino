@@ -61,8 +61,8 @@ void initProgs(){
   {4,255,0,1,{}}};
 }
 
-const int numcmds = 4;
-char incmd[][10]={"devtime", "cmd", "prg", "req", "set," "progs"};
+const int numcmds = 6;
+char incmd[][10]={"devtime", "cmd", "prg", "req", "set", "progs"};
 
 void acb(){
   int i=0;
@@ -74,7 +74,6 @@ void acb(){
 }
 
 void processInc(){
-  Serial.println(itopic);
   for (int i=0;i<numcmds;i++){
     if(strcmp(incmd[i], itopic)==0){
       switch (i){

@@ -67,6 +67,26 @@ void deseriProg(prgs_t& prgs, char* kstr){
   }
 }
 
+void setCur(prg_t& p, int &cur, int &nxt){
+  for(int j=0; j<p.ev;j++){
+    if (hour() == p.prg[j][0]){
+      if (minute() < p.prg[j][1]){
+        cur = j-1;
+        break;
+      }
+    }
+    if (hour() < p.prg[j][0]){
+      cur= j-1;
+      break;
+    }
+    cur =j;
+  }
+  nxt = cur+1;
+  if (nxt>=p.ev){
+    nxt=0;
+  }        
+}
+
 void ckAlarms(prgs_t& prgs, state_t& state, flags_t& f){
   if((f.CKaLARM & 1) == 1){
     prg_t p = prgs.temp1;
@@ -74,7 +94,30 @@ void ckAlarms(prgs_t& prgs, state_t& state, flags_t& f){
     int id =0;
     int bit =1;
     int cur, nxt;
+    setCur(p, cur, nxt);
+
   }
+}
+void pubFlags(flags_t& f){
+  StaticJsonBuffer<500> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root["aUTOMA"]=f.aUTOMA;
+  root["fORCErESET"]=f.fORCErESET;  
+  root["cREMENT"]=f.cREMENT;
+  root["HAStIMR"]=f.HAStIMR; //11100(28) 4,8, and 16 have timers not temp
+  root["IStIMERoN"]=f.IStIMERoN;//11100 assume some time left, timers with tleft>0 
+  root["HAYpROG"]=f.HAYpROG;// = senrels with events>1
+  root["HAYpROGcNG"]=f.HAYpROGcNG;// 11111(31 force report) g change root["or ext
+  root["HAYsTATEcNG"]=f.HAYsTATEcNG; //11111(31 force report)state ch root["or ext
+  root["CKaLARM"]=f.CKaLARM; //11111 assume alarm is set at start
+  root["ISrELAYoN"]=f.ISrELAYoN;// = summary of relay states  
+  JsonArray& tleft = root.createNestedArray("tIMElEFT");
+  for(int i=0;i<6;i++){
+    tleft.add(f.tIMElEFT[i]);
+  }
+  char ast[180];
+  root.printTo(ast, sizeof(ast));  
+  Serial.println(ast);
 }
 
 void creaJson(prg_t& p, char* astr){
@@ -151,8 +194,7 @@ void loop(){
   if (f.CKaLARM>0){
     ckAlarms(prgs,state,f); //whatever gets scheduled should publish its update
     pubPrg(prgs, f.CKaLARM);
+    pubFlags(f);
     f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
-    // pubFlags();
-    // pubPrg(f.CKaLARM);
   }
 }

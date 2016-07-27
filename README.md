@@ -8,6 +8,34 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 06-static-const-char*scribedTo[]
+Yes there is a way to have an initialized device customized mostly by changes to STATE.h even including arrays of strings that can be shared among classes and files.
+in STATE.h
+
+    struct labels_t {
+      static const char* scribedTo[]; 
+      static const int numcmds;
+    };
+in STATE.cpp
+
+    const char* labels_t::scribedTo[] ={"devtime", "cmd", "prg", "req", "set", "progs"};
+    const int labels_t::numcmds =6;//
+in .ino declare as 
+
+    labels_t la;
+and then wherever you want access to `la.scribedTo[]` just 
+
+    #include "STATE.h"
+    extern labels_t la;
+
+
+
+### 05-incrbuild
+test.ino + config, MQclient and Reqs
+
+#### callback limitations
+  Serial.println(ipayload2);
+if a external package has a callback signature builtin as a function, you cannot replace it with a class method. That is the case for `PubSubClient client(espClient);` and `Alarm.alarmOnce(hour(), minute()+1,9,bm2)`
 ### 04-ckAlarms-pubProg-in-test.ino
 ### 03-refactoring-continued
 #### on the interaction between progs and srstate
@@ -18,8 +46,8 @@ example state:
 
 example prg:
 
-     {id:0, id:255, ev:2, numdata:2, prg:[[6,39,92,64], [8,45,87,87]]}   
-     {id:2, id:255, ev:2, numdata:1, prg:[[6,39,1], [8,45,0]]} 
+     {id:0, id:255, ev:2, numdata:2, prg:[[0,0,72,70],[6,39,92,64], [8,45,87,87]]}   
+     {id:2, id:255, ev:2, numdata:1, prg:[[0,0,0],[6,39,1], [8,45,0]]} 
 ##### option-require prg:[0,0,def[0],def[1]]
 Require client to provide current defaults in the form of
 
@@ -219,9 +247,10 @@ sd
     time_t schedcrement = 0;
     time_t inow;
     if (f.CKaLARM>0){
-      sched.ckAlarms(); //whatever gets scheduled should publish its update
+      sched.ckAlarms(prgs,state,f); //whatever gets scheduled should publish its update
       pubFlags();
       pubPrg(f.CKaLARM);
+      f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
     }
     inow = millis();
     if(inow-schedcrement > f.cREMENT*1000){
@@ -254,15 +283,19 @@ sd
     };
 
     prgs_t prgs;
-    void initProgs(){
+    flags_t f;
+    state_t state;
+    void initShit(){
       prgs = {
-      {1,255,0,3,{}},
-      {2,255,0,1,{}},
-      {3,255,0,1,{}},
-      {4,255,0,1,{}}};
-      {0,255,0,3,{}},
-      f = {1,0,5,28,0,31,31,0,{0,0,0,0,0}}
-    } 
+        {0,255,1,2,{{0,0,74,64}}},
+        {1,255,1,2,{{0,0,84,64}}},
+        {2,255,1,1,{{0,0,0}}},
+        {3,255,1,1,{{0,0,0}}},
+        {4,255,1,1,{{0,0,0}}}
+      };
+      f={1,0,5,28,28,0,31,31,31,0,{0,0,0,0,0}};
+      state = {{44,0,80,50},{33,0,90,60},{0},{0},{0}};
+    }     
 
 ##### processIncoming prg   
 
