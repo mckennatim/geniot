@@ -8,7 +8,9 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
-### 06-static-const-char*scribedTo[]
+### 07-prgs-srstate-interaction
+Changed the start up procedure to prevent aUTOMA, CKaLARM and HAYsTATEcNG from getting set until the device gets the current time from the server. (PUZZLE is why sched.desiriTime() cant call actTime(), both have to be called separately from req.processInc().) Sending `one prog` from client places the device in the correct program for the time and changes the state to reflect that.
+### 06-static-const-char-scribedTo
 Yes there is a way to have an initialized device customized mostly by changes to STATE.h even including arrays of strings that can be shared among classes and files.
 in STATE.h
 

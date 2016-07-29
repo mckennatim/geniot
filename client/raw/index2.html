@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1">	
+	<title>webmqtt</title>
+	<script src="./browserMqtt.js"></script>
+	<style type="text/css" media="screen">
+		#temp1 {
+			font-size: 2em;
+		}	
+		span {
+			font-size: 1.4em;
+		}	
+	</style>	
+</head>
+<body>
+	<h1>read and change device</h1>
+	device: <input type="text" id="idev" value=CYURD0 size="12"onchange="devChanged()">
+	<span  id="temp1"></span><br>
+	roof heater on  ? <span id='lue'></span><br>
+	<input type="text" id="srid" value=0 size="1">
+	<input type="text" id="srda" value=0 size="4">
+	<button id="button" onclick="acmd()">one command</button>
+	<button id="button" onclick="aprg()">one prog</button><br>
+	<button id="button" onclick="uclicked()">toggle device</button>
+	<button id="button3" onclick="trigTimeUpd()">trigger time upd</button>
+	<button id="button3" onclick="sendSchedule()">send schedule</button>
+	<button id="button3" onclick="send1Schedule()">send 1 schedule</button><br>
+	Request info from device
+<select id="req" onclick="selChanged()">
+  <option value="0" selected="selected">srstates</option>
+  <option value="1" >progs</option>
+  <option value="2">flags</option>
+</select><br>
+	with timer1 starting in 
+	<input type="text" id="mbox1" value=0 size="2" onchange="mchanged()">
+	min and going for 
+	<input type="text" id="tbox1" value=1 size="2" onchange="vchanged()">minutes<br>
+	with timer2 starting in 
+	<input type="text" id="mbox2" value=0 size="2" onchange="mchanged()">
+	min and going for 
+	<input type="text" id="tbox2" value=2 size="2" onchange="vchanged()">minutes<br>
+	with timer3 starting in 
+	<input type="text" id="mbox3" value=0 size="2" onchange="mchanged()">
+	min and going for 
+	<input type="text" id="tbox3" value=3 size="2" onchange="vchanged()">minutes<br>
+	<div>
+		Timer display updates every 
+		<input type="text" id="crement" value=5 size="3" onchange="newCrement()">
+		seconds <br>
+	for timer 	
+	<input type="text" id="wt" value=1 size="2" > on/off 
+	<input type="text" id="onoff" value=0 size="2" >
+	<button id="bonoff" onclick="turnonoff()">turn on/off</button><br>
+
+		<span>Timer 1: </span><span id="timr1"></span><br>
+		<span>Timer 2: </span><span id="timr2"></span><br>
+		<span>Timer 3: </span><span id="timr3"></span><br>
+	</div>
+	<script>
+		var dev = document.getElementById("idev")
+		//const deviceId ='CYURD002'
+		var tmr, progs, cmd, prg, req, trigtime, devtime, sched, client;
+		function devChanged(){
+			var deviceId = dev.value
+			//publish to device
+			prg = deviceId+'/prg'
+			cmd = deviceId +'/cmd'
+			req = deviceId +'/req'
+			//publish to server
+			trigtime = deviceId +'/time'
+			//subscribe
+			devtime = deviceId +'/devtime'
+			srstate = deviceId+'/srstate'
+			//deprecate
+			tmr = deviceId+'/tmr'
+			progs = deviceId+'/progs'
+			sched = deviceId +'/sched'
+			client = mqtt.connect('ws://162.217.250.109:3333')
+			client.on('connect', function(){
+				console.log('maybe connected')
+				client.subscribe(devtime)//device time
+				client.subscribe(srstate) 
+				client.subscribe(tmr) 
+				client.subscribe(progs)
+				client.on('message', function(topic, payload) {
+					var pls = payload.toString()
+					var plo = JSON.parse(pls)
+					//console.log(plo)
+					console.log('['+topic+'] '+payload.toString())
+			    var sp = topic.split("/")
+			    var job = sp[1];	
+			    switch(job){
+			    	case "srstate":
+							document.getElementById('lue').innerHTML=plo.heat
+							document.getElementById('temp1').innerHTML=plo.temp1
+							break;
+						case "tmr":
+							document.getElementById('timr1').innerHTML=plo.timr1
+							document.getElementById('timr2').innerHTML=plo.timr2
+							document.getElementById('timr3').innerHTML=plo.timr3
+							break;
+						case "progs":
+							console.log(plo)
+							break;
+			    }			
+				});	
+				client.publish('presence', 'Web Client is alive.. Test Ping! ');
+			});			
+		}
+		//var client = mqtt.connect('ws://10.0.1.100:3333')
+		var v1 = document.getElementById("tbox1")
+		var m1 = document.getElementById("mbox1")
+		var v2 = document.getElementById("tbox2")
+		var m2 = document.getElementById("mbox2")
+		var v3 = document.getElementById("tbox3")
+		var m3 = document.getElementById("mbox3")
+		var wt = document.getElementById("wt")
+		var onof = document.getElementById("onoff")
+		var srid = document.getElementById("srid")
+		var srda = document.getElementById("srda")
+		var dreq = document.getElementById("req")
+		var crement=10;
+		//console.log(v.value)
+
+		var onoff = 1
+		function uclicked(){
+			//document.getElementById('lue').innerHTML=onoff
+			onoff=!onoff;
+			var thecmd =  "{\"heat\":"+onoff*1+",\"auto\":1,\"hilimit\":80,\"lolimit\":74,\"empty\":0}"
+			console.log(thecmd);
+			client.publish(cmd, thecmd)
+		}
+		function acmd(){
+			var id =srid.value
+			var str = srda.value
+			var arr = str.slice(1,-1).split(',').map(function(e){return parseInt(e)})
+			var thecmd =  `{\"id\":${id}`
+			var sl = str.length
+			if (sl>1){
+				thecmd+=`,\"darr\":[${str}]}`
+			}else if(sl==1){
+				thecmd+= `,\"data\":${str}}`
+			}else{
+				thecmd+='}'
+			}
+			console.log(str)
+			console.log(thecmd);
+			client.publish(cmd, thecmd)
+		}
+		function aprg(){
+			var thecmd =  `{\"id\":0,\"pro\":[[0,0,84,82],[6,30,80,79]]}`	
+			var thecmd2 =  `{\"id\":1,\"pro\":[[0,0,79,77],[6,30,78,77]]}`	
+			var thecmd3 =  `{\"id\":2,\"pro\":[[0,0,0],[6,30,1]]}`	
+			console.log(prg)
+			console.log(thecmd)		
+			client.publish(prg, thecmd)
+			client.publish(prg, thecmd2)
+			client.publish(prg, thecmd3)
+		}
+		function pubState(){
+			var id = dreq.options[dreq.selectedIndex].value; 
+			var txt = dreq.options[dreq.selectedIndex].text; 
+			var thecmd =  `{\"id\":${id},\"req\":\"${txt}\"}`
+			console.log(thecmd)
+			client.publish(req, thecmd);
+		}
+		function selChanged(){
+			var id = dreq.options[dreq.selectedIndex].value; 
+			var txt = dreq.options[dreq.selectedIndex].text; 
+			var thecmd =  `{\"id\":${id},\"req\":\"${txt}\"}`
+			console.log(thecmd)
+			client.publish(req, thecmd);
+		}
+		function empty(){
+			var thecmd =  "{\"heat\":"+onoff*1+",\"auto\":1,\"hilimit\":85,\"lolimit\":75,\"empty\":1}"
+			console.log(thecmd);
+			client.publish(cmd, thecmd)			
+		}
+		function trigTimeUpd(){
+			var thecmd =  "trigger time upd from server to esp"
+			console.log(thecmd);
+			console.log(trigtime);
+			client.publish(trigtime, thecmd)			
+		}
+		function vchanged(){
+			//console.log("val changed")
+		}
+		function mchanged(){
+			console.log("st changed")
+		}
+		function newCrement(){
+			console.log("crement changed")
+			sendSchedule();
+		}
+		function sendSchedule(){
+			//console.log(v.value);
+			crement = document.getElementById("crement").value
+			var d = new Date();
+			var strtmin1 = m1.value;
+			var strtmin2 = m2.value;
+			var strtmin3 = m3.value;
+			var d01 = Date.now()+60000*strtmin1
+			var d02= Date.now()+60000*strtmin2
+			var d03= Date.now()+60000*strtmin3
+			var d21 = new Date(d01);
+			var d22 = new Date(d02);
+			var d23 = new Date(d03);
+
+			var setmin1 = v1.value
+			var setmin2 = v2.value
+			var setmin3 = v3.value
+			var d31 = new Date(d01+ 60000*(setmin1));
+			var d32 = new Date(d02+ 60000*(setmin2));
+			var d33 = new Date(d03+ 60000*(setmin3));
+			console.log(d);
+			var hr1 = d21.getHours();
+			var mi1 = d21.getMinutes();
+			var hr2 = d22.getHours();
+			var mi2 = d22.getMinutes();
+			var hr3 = d23.getHours();
+			var mi3 = d23.getMinutes();
+			var hr31 = d31.getHours();
+			var mi31 = d31.getMinutes();
+			var hr32 = d32.getHours();
+			var mi32 = d32.getMinutes();
+			var hr33 = d33.getHours();
+			var mi33 = d33.getMinutes();
+			console.log(`${d21} - ${hr1}:${mi1}`)
+			console.log(`${d22} - ${hr2}:${mi2}`)
+			console.log(`${d31} - ${hr31}:${mi31}`)
+			console.log(`${d32} - ${hr32}:${mi32}`)
+			var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
+			console.log(thecmd);
+			client.publish(sched, thecmd)			
+		}
+		function send1Schedule(){
+			//console.log(v.value);
+			crement = document.getElementById("crement").value
+			var d = new Date();
+			var strtmin1 = m1.value;
+			var strtmin2 = m2.value;
+			var strtmin3 = m3.value;
+			var d01 = Date.now()+60000*strtmin1
+			var d02= Date.now()+60000*strtmin2
+			var d03= Date.now()+60000*strtmin3
+			var d21 = new Date(d01);
+			var d22 = new Date(d02);
+			var d23 = new Date(d03);
+
+			var setmin1 = v1.value
+			var setmin2 = v2.value
+			var setmin3 = v3.value
+			var d31 = new Date(d01+ 60000*(setmin1));
+			var d32 = new Date(d02+ 60000*(setmin2));
+			var d33 = new Date(d03+ 60000*(setmin3));
+			console.log(d);
+			var hr1 = d21.getHours();
+			var mi1 = d21.getMinutes();
+			var hr2 = d22.getHours();
+			var mi2 = d22.getMinutes();
+			var hr3 = d23.getHours();
+			var mi3 = d23.getMinutes();
+			var hr31 = d31.getHours();
+			var mi31 = d31.getMinutes();
+			var hr32 = d32.getHours();
+			var mi32 = d32.getMinutes();
+			var hr33 = d33.getHours();
+			var mi33 = d33.getMinutes();
+			console.log(`${d21} - ${hr1}:${mi1}`)
+			console.log(`${d22} - ${hr2}:${mi2}`)
+			console.log(`${d31} - ${hr31}:${mi31}`)
+			console.log(`${d32} - ${hr32}:${mi32}`)
+			var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,99],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]]]}";
+// var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,99],
+// \"progs\":[
+// [[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],
+// [[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],
+// [[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]]
+// ]}";
+			//var thecmd =  "{\"crement\":"+crement+",\"serels\":[99,99,99,99,0],\"progs\":[[["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1]]]}";
+			console.log(thecmd);
+			client.publish(sched, thecmd)			
+		}
+
+		function turnonoff(){
+			var wht = wt.value*1+1;
+			console.log(onof.value)
+			var oo = onof.value*1;
+			var serels = [99,99,99,99,99];
+			serels[wht]=0
+			var sserels = JSON.stringify(serels) 
+			var progs = new Array();
+			progs[0] = new Array()
+			progs[0][0] = [0,0, oo]
+			progs[0][1] = [23,59, oo]
+			var sprogs =JSON.stringify(progs)
+			var thecmd =  "{\"crement\":"+crement+",\"serels\":"+sserels+",\"progs\":"+sprogs+"}";
+			console.log(thecmd)
+			client.publish(sched, thecmd)
+		}
+
+		// client.on('connect', function(){
+		// 	console.log('maybe connected')
+		// 	client.subscribe(devtim)
+		// 	client.subscribe(statu) 
+		// 	client.subscribe(tmr) 
+		// 	client.subscribe(progs)
+		// 	client.on('message', function(topic, payload) {
+		// 		var pls = payload.toString()
+		// 		var plo = JSON.parse(pls)
+		// 		console.log(plo)
+		// 		console.log('['+topic+'] '+payload.toString())
+		//     var sp = topic.split("/")
+		//     var job = sp[1];	
+		//     switch(job){
+		//     	case "status":
+		// 				document.getElementById('lue').innerHTML=plo.heat
+		// 				document.getElementById('temp1').innerHTML=plo.temp1
+		// 				break;
+		// 			case "tmr":
+		// 				document.getElementById('timr1').innerHTML=plo.timr1
+		// 				document.getElementById('timr2').innerHTML=plo.timr2
+		// 				document.getElementById('timr3').innerHTML=plo.timr3
+		// 				break;
+		//     }			
+		// 	});	
+		// 	client.publish('presence', 'Web Client is alive.. Test Ping! ');
+		// });
+	</script>
+
+
+<pre>
+var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2],\"progs\":
+
+for inputs 0,1
+           0,3 at 1:25pm
+[CYURD002/progs] {"crement":5,"serels":[0,99,1,2,99],"progs":[
+[[0,0,80,77],[6,12,82,75],[8,20,85,78],[13,25,78,74],[13,26,83,79]],
+[[0,0,0],[13,25,1],[13,26,0]],
+[[0,0,0],[13,25,1],[13,28,0]]]}
+
+var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],
+\"progs\":[
+[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],
+[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],
+[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],
+[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
+</pre>
+<button id="button2" onclick="empty()">empty eeprom</button><br><br>
+
+</body>
+</html>

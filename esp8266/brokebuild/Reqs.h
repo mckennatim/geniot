@@ -10,11 +10,10 @@ public:
   PubSubClient cclient;
   char* cdevid;
   void stime();
-	void pubFlags();
-	void pubPrg(int ck);
+	void pubFlags(flags_t& f);
+	void pubPrg(prgs_t& prgs, int ck);
 	void pubState(int hc);
-	void processInc(); 
-	bool deseriReq(); 
+	void processInc();  
 private:	
 	bool dog;
 	void creaJson(prg_t& p, char* astr);

@@ -10,9 +10,9 @@ void bm4();
 class Sched{
 public:
 	bool deseriTime(); 
+	void actTime();
 	void deseriProg(char* kstr);
 	void ckAlarms();
-	void actTime();
 private:
 	void copyProg(prg_t& t, JsonArray& ev);
 	void setCur(prg_t& p, int &cur, int &nxt);

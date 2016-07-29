@@ -11,7 +11,6 @@ extern char ipayload[250];
 extern labels_t la;
 extern flags_t f;
 extern state_t sr;
-extern prgs_t prgs;
 
 Reqs::Reqs(char* devid, PubSubClient& client ){
   cdevid = devid;
@@ -30,7 +29,6 @@ void Reqs::stime(){
   }		
 }
 
-//{"devtime", "cmd", "prg", "req", "set", "progs"}
 void Reqs::processInc(){
   for (int i=0;i<la.numcmds;i++){
     if(strcmp(la.scribedTo[i], itopic)==0){
@@ -44,10 +42,6 @@ void Reqs::processInc(){
           Serial.println(ipayload);
           sched.deseriProg(ipayload);
           break;          
-        case 3://in req
-          Serial.println(ipayload);
-          deseriReq();
-          break;          
         case 5:
           Serial.println("in progs(deprecated)");
           break;
@@ -60,7 +54,7 @@ void Reqs::processInc(){
   }
 }
 
-void Reqs::pubFlags(){
+void Reqs::pubFlags(flags_t& f){
   StaticJsonBuffer<500> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root["aUTOMA"]=f.aUTOMA;
@@ -98,7 +92,7 @@ void Reqs::creaJson(prg_t& p, char* astr){
   strcpy(astr,ast);
 }
 
-void Reqs::pubPrg(int ck){
+void Reqs::pubPrg(prgs_t& prgs, int ck){
   if((ck & 1) == 1){
     prg_t p = prgs.temp1;
     char astr[120];
@@ -167,21 +161,5 @@ void Reqs::pubState(int hc){
     sprintf(astr,   "{\"id\":%d, \"darr\":[%d]}", 4, sr.timr3.state);
     clpub(srstate, astr);
   }
-}
-
-bool Reqs::deseriReq(){
-  StaticJsonBuffer<300> jsonBuffer;
-  JsonObject& rot = jsonBuffer.parseObject(ipayload);
-  int id = rot["id"];  
-  switch(id){
-   case 0://`{\"id\":0, \"req\":"srstates"}`
-    f.HAYsTATEcNG = 31; 
-    break;
-   case 1://\"id\":1, \"req\":"progs"}
-    Serial.println("in desiriReq 1");
-    break;
-   default:
-    Serial.println("in default");
-  }  
 }
 

@@ -10,6 +10,17 @@ extern prgs_t prgs;
 extern state_t sr;
 extern char ipayload[250];
 
+
+bool Sched::deseriTime(){
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(ipayload);
+  //root.prettyPrintTo(Serial);
+  unix = root["unix"];
+  LLLL = root["LLLL"];
+  zone = root["zone"];
+  return root.success();
+}
+
 void Sched::actTime(){
   //Serial.println(unix);
   Serial.println(LLLL);
@@ -18,30 +29,11 @@ void Sched::actTime(){
   //Serial.println(datetime); 
   setTime(datetime);
   setSyncInterval(4000000); 
-  Serial.print(hour()); 
-  Serial.print(":");  
-  Serial.println(minute());
-  f.aUTOMA = 1;  
-  f.CKaLARM = 31; 
-  f.HAYsTATEcNG =31;
+  //Serial.println(hour());   
 }
-
-bool Sched::deseriTime(){
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject(ipayload);
-  root.prettyPrintTo(Serial);
-  unix = root["unix"];
-  LLLL = root["LLLL"];
-  zone = root["zone"];
-  return root.success();
-  //actTime();
-}
-
 
 void Sched::copyProg(prg_t& t, JsonArray& ev){
   t.ev=ev.size();
-  // Serial.print("ev.size=");
-  // Serial.println(ev.size());
   for(int h=0;h<ev.size();h++){
     JsonArray& aprg = ev[h];
     aprg.printTo(Serial);
@@ -69,19 +61,15 @@ void Sched::deseriProg(char* kstr){
       break;
     case 1:
       copyProg(prgs.temp2, events);          
-      f.CKaLARM=f.CKaLARM | 2;          
       break;
     case 2:
       copyProg(prgs.timr1, events);          
-      f.CKaLARM=f.CKaLARM | 4;          
       break;
     case 3:
       copyProg(prgs.timr2, events);          
-      f.CKaLARM=f.CKaLARM | 8;          
       break;
     case 4:
       copyProg(prgs.timr3, events);          
-      f.CKaLARM=f.CKaLARM | 16;          
       break;
     default:
       Serial.print(id);
@@ -89,29 +77,7 @@ void Sched::deseriProg(char* kstr){
   }
 }
 
-//void Sched::repCur(int cur )
-void Sched::setTleft(prg_t p, int cur, int nxt, int &tleft){
-  int hr = hour();
-  int min = minute(); 
-  if(nxt==0){
-    tleft = (23-hr)*60+(59-min) +1;
-  }else{
-    int nxthr = p.prg[nxt][0];
-    int nxtmin = p.prg[nxt][1];
-    if(nxtmin < min){//12:25 -> 14:05
-      nxtmin=nxtmin+60;
-      nxthr--;
-    }
-    tleft= (nxthr-hr)*60 + (nxtmin - min);
-  }
-}
-
 void Sched::setCur(prg_t& p, int &cur, int &nxt){
-  Serial.print("ev(size)=");
-  Serial.println(p.ev);
-  Serial.print(hour());
-  Serial.print(":");
-  Serial.println(minute());
   for(int j=0; j<p.ev;j++){
     if (hour() == p.prg[j][0]){
       if (minute() < p.prg[j][1]){
@@ -131,6 +97,22 @@ void Sched::setCur(prg_t& p, int &cur, int &nxt){
   }        
 }
 
+void Sched::setTleft(prg_t p, int cur, int nxt, int &tleft){
+  int hr = hour();
+  int min = minute(); 
+  if(nxt==0){
+    tleft = (23-hr)*60+(59-min) +1;
+  }else{
+    int nxthr = p.prg[nxt][0];
+    int nxtmin = p.prg[nxt][1];
+    if(nxtmin < min){//12:25 -> 14:05
+      nxtmin=nxtmin+60;
+      nxthr--;
+    }
+    tleft= (nxthr-hr)*60 + (nxtmin - min);
+  }
+}
+
 void Sched::ckAlarms(){
   if((f.CKaLARM & 1) == 1){
     prg_t p = prgs.temp1;
@@ -139,28 +121,6 @@ void Sched::ckAlarms(){
     int bit =1;
     int cur, nxt;
     setCur(p, cur, nxt);
-    Serial.print("cur=");
-    Serial.println(cur);
-    Serial.print("nxt=");
-    Serial.println(nxt);
-    sr.temp1.hilimit = p.prg[cur][2];
-    sr.temp1.lolimit = p.prg[cur][3];
-    f.HAYsTATEcNG=f.HAYsTATEcNG | 1;
-  }
-  if((f.CKaLARM & 2) == 2){
-    prg_t p = prgs.temp2;
-    temp_t s = sr.temp2;
-    int id =1;
-    int bit =2;
-    int cur, nxt;
-    setCur(p, cur, nxt);
-    Serial.print("cur=");
-    Serial.println(cur);
-    Serial.print("nxt=");
-    Serial.println(nxt);
-    sr.temp2.hilimit = p.prg[cur][2];
-    sr.temp2.lolimit = p.prg[cur][3];
-    f.HAYsTATEcNG=f.HAYsTATEcNG | 2;
   }
   if((f.CKaLARM & 4) == 4){
     prg_t p = prgs.timr1;
