@@ -127,25 +127,6 @@ void Sched::setCur(prg_t& p, int &cur, int &nxt){
   }        
 }
 
-// int setTimrAlarm(prg_t& p, timr_t& s){
-//   Alarm.free(p->aid);
-//   int id =2;
-//   int bit =4;
-//   int cur, nxt;
-//   setCur(*p, cur, nxt);
-//   int tleft=0;//initialize
-//   //for timers
-//   s->state = p->prg[cur][2];
-//   f.ISrELAYoN = f.ISrELAYoN | s->state;
-//   if (s->state){ //if relay is on
-//      setTleft(*p, cur, nxt, tleft);
-//      f.IStIMERoN = f.IStIMERoN | bit;
-//   }
-//   f.tIMElEFT[id]=tleft*60;
-//   f.HAYsTATEcNG=f.HAYsTATEcNG | 4;
-//   return nxt;
-// }
-
 void Sched::ckAlarms(){
   if((f.CKaLARM & 1) == 1){
     prg_t *p = &prgs.temp1;
@@ -278,7 +259,7 @@ void Sched::deductCrement(int id){
 }
 
 void Sched::updTimers(){
-  for(int i=0;i<sizeof(f.tIMElEFT);i++){
+  for(int i=0;i<5;i++){
     if(f.tIMElEFT[i]>0){
       deductCrement(i);
     }

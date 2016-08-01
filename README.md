@@ -8,6 +8,8 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 09-now-w-updTimers-working
+problem was using `sizeof(f.tIMElEFT)` in updTimers() loop. sizeof reports 20 should be 5.
 ### 08-almost-wo-updTimers
 Revived a version that compiles. Sets the state on program change.
 **TODO: that turn off alarm thing**

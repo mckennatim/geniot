@@ -130,13 +130,13 @@ void loop(){
     req.pubFlags();
     f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
   }
-  // if(inow-schedcrement > f.cREMENT*1000){
-  //   schedcrement = inow;
-  //   if (f.IStIMERoN >0){
-  //     sched.updTimers();
-  //   }
-  // }
   inow = millis();
+  if(inow-schedcrement > f.cREMENT*1000){
+    schedcrement = inow;
+    if (f.IStIMERoN >0){
+      sched.updTimers();
+    }
+  }
   if (inow - before > 1000) {
     before = inow;
     if(f.aUTOMA){
