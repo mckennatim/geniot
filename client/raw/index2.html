@@ -30,7 +30,7 @@
 	Request info from device
 <select id="req" onclick="selChanged()">
   <option value="0" selected="selected">srstates</option>
-  <option value="1" >progs</option>
+  <option value="1" >sched</option>
   <option value="2">flags</option>
 </select><br>
 	with timer1 starting in 
@@ -73,17 +73,19 @@
 			//subscribe
 			devtime = deviceId +'/devtime'
 			srstate = deviceId+'/srstate'
+			sched = deviceId +'/sched'
+			flags = deviceId+'/flags'
 			//deprecate
 			tmr = deviceId+'/tmr'
-			progs = deviceId+'/progs'
-			sched = deviceId +'/sched'
+			// progs = deviceId+'/progs'
 			client = mqtt.connect('ws://162.217.250.109:3333')
 			client.on('connect', function(){
 				console.log('maybe connected')
 				client.subscribe(devtime)//device time
 				client.subscribe(srstate) 
 				client.subscribe(tmr) 
-				client.subscribe(progs)
+				client.subscribe(sched)
+				client.subscribe(flags)
 				client.on('message', function(topic, payload) {
 					var pls = payload.toString()
 					var plo = JSON.parse(pls)
@@ -231,9 +233,18 @@
 			console.log(`${d22} - ${hr2}:${mi2}`)
 			console.log(`${d31} - ${hr31}:${mi31}`)
 			console.log(`${d32} - ${hr32}:${mi32}`)
-			var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
-			console.log(thecmd);
-			client.publish(sched, thecmd)			
+			//var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
+			//console.log(thecmd);
+			var thecmd0 =  "{\"id\":0,\"pro\":[[0,0,84,82],[6,30,80,79],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]]}"	
+			var thecmd1 =  `{\"id\":1,\"pro\":[[0,0,79,77],[6,30,78,77]]}`	
+			var thecmd2 ="{\"id\":2,\"pro\":[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]]}"
+			var thecmd3 ="{\"id\":3,\"pro\":[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]]}"
+			var thecmd4 ="{\"id\":4,\"pro\":[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]}"
+			client.publish(prg, thecmd0)
+			client.publish(prg, thecmd1)
+			client.publish(prg, thecmd2)
+			client.publish(prg, thecmd3)			
+			client.publish(prg, thecmd4)			
 		}
 		function send1Schedule(){
 			//console.log(v.value);
@@ -332,21 +343,7 @@
 
 
 <pre>
-var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2],\"progs\":
 
-for inputs 0,1
-           0,3 at 1:25pm
-[CYURD002/progs] {"crement":5,"serels":[0,99,1,2,99],"progs":[
-[[0,0,80,77],[6,12,82,75],[8,20,85,78],[13,25,78,74],[13,26,83,79]],
-[[0,0,0],[13,25,1],[13,26,0]],
-[[0,0,0],[13,25,1],[13,28,0]]]}
-
-var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],
-\"progs\":[
-[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],
-[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],
-[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],
-[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
 </pre>
 <button id="button2" onclick="empty()">empty eeprom</button><br><br>
 

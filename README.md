@@ -8,6 +8,86 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 08-almost-wo-updTimers
+Revived a version that compiles. Sets the state on program change.
+**TODO: that turn off alarm thing**
+**TODO: [holds and boosts](#ok-so-what-about-overrides-bud)** What does inserting into an existing program look like?
+> **ALGO:** boost has a time+setting and a duration ([12,30,68,66],90)
+> - calculate the time at the end of boost
+> - find `cur` for end of boost and replace its time with end boost time 
+> - for HOLDS replace current program with hold value [[0,0,56,54]]
+
+**TODO: cmd and set**
+>**CYURD001/cmd** {id:0, setting: [68,66]} - changes `cur` settings [13,15,56,54]->[13,15,68,66], program will regain control at `nxt`
+**CYURD001/set** {cREMENT: 6, aUTOMA: 0, fORCErESET: 1} You can't change: tIMElEFT since ending the timer is a function of ckAlarm() and its callbacks. But instead of sending `srstate` every `cREMENT` seconds you could just send the `tIMElEFT[6]` array?
+
+**TODO: updTimers()**
+Currently main.ino does this...
+
+    if(inow-schedcrement > f.cREMENT*1000){
+      schedcrement = inow;
+      if(IS_ON > 3){
+        sched.updateTmrs(tmr, client, po, ste, f);
+        publishTmr();
+      }
+    }
+Maybe `sched.updateTimrs` is too complicated, I mean, timers going to 0 just loosely coincides with with the Alarm callback anyway. If `Sched::setTLeft()` did a bit more, say
+
+    if (s.state){ //if relay is on
+       setTleft(p, cur, nxt, tleft);
+       f.tIMElEFT[id]=tleft;
+       f.IStIMERoN = f.IStIMERoN | bit;
+    }
+Then all updateTimers would have to do is deduct cREMENT for any IStIMERoN and set f.tIMElEFT[id]=0 when f.tIMElEFT[id]<=0  and turn off the f.IStIMERoN bit. The loop() check then becomes:
+
+    if(inow-schedcrement > f.cREMENT*1000){
+      schedcrement = inow;
+      if(f.IStIMERoN > 0){
+        sched.updTimers();f
+        sched.pubTleft();f
+      }
+    }
+
+    void SChed::updTimers(){
+      for(int i=0;i<sizeof(f.tIMElEFT);i++){
+        if(f.tIMElEFT[i]>0){
+          deductCrement(i);
+        }
+      }
+    }
+
+    void Sched::deductCrement(id){
+      int t = tIMElEFT[id];
+      t = t - f.cREMENT;
+      if(t<=0){
+        t=0;
+        f.IStIMERoN = f.IStIMERoN & (31-2^id) //11011
+      }
+      tIMElEFT[id] = t;
+    }
+**TODO: some looping mechanism through the set bits**
+
+    doForSet(f.ckAlarms)
+
+    void doForSet(int bitmap) {//29
+      for (int i=0;i<f.nUMsr){
+        int bit = 2^i;
+        int allset = (2^f.nUMsr - 1);
+        int mask = allset -bit;
+        if((bitmap & bit) == bit){
+          if(temp_t){
+            ckTemp(i);
+          }
+          if(timr_t){
+            ckTimr(i);
+          }
+        }
+      }
+    }
+Can you call access a struct element like this
+char* na = "temp1";
+prg_t = prgs[na]; //same as = prgs.temp1;
+
 ### 07-prgs-srstate-interaction
 Changed the start up procedure to prevent aUTOMA, CKaLARM and HAYsTATEcNG from getting set until the device gets the current time from the server. (PUZZLE is why sched.desiriTime() cant call actTime(), both have to be called separately from req.processInc().) Sending `one prog` from client places the device in the correct program for the time and changes the state to reflect that.
 ### 06-static-const-char-scribedTo
@@ -485,8 +565,8 @@ fix one command
 
 #### OK so what about overrides bud
 * a boost is OK, it just fits into the daily program
-* a hold sets a value and wipes out (1 or more) days program
-* bridge on wipes out the program and sets the relay on
+* a hold sets a value and wipes out (1 or more) days program - justs sends a default prg `id:0,pro:[[0,0,75,72]]` a hold has to be controlled by the server since every day it gets its prgs from the server. 
+* bridge on wipes out the program and sets the relay on `id:2,pro:[[0,0,1]]`
 * bridge timer on inserts itself into whatever program is running
 * bridge off wipes out he program and sets the relay off forever? for one day? OK so you set a watering schedule and turn on the taps. It runs every day taps on or taps off. But then you turn the taps off and want to just leave the relays on. Any time you go to use the water it goes on. Maybe it should never be off, only timed or on? Off just sets to off till the next program cycle, Off is a kind of unboost til next. If there is no progam, day to day it should remember the last state. So maybe a flag and a memory
 

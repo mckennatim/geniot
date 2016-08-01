@@ -20,7 +20,6 @@ Reqs::Reqs(char* devid, PubSubClient& client ){
 
 void Reqs::stime(){
 	char* dd = "the time is being requesrd";
-	f.cREMENT++;
 	Serial.println(dd);
 	char time[20];
 	strcpy(time,cdevid);
@@ -39,6 +38,14 @@ void Reqs::processInc(){
           Serial.println("in devtime");
           sched.deseriTime();
           sched.actTime();
+          // Serial.print("temp1.aid=");
+          // Serial.println(prgs.temp1.aid);
+          // Serial.print("temp1.ev=");
+          // Serial.println(prgs.temp1.ev);
+          //pubPrg(1);
+				  f.aUTOMA = 1;  
+				  f.CKaLARM = 31; 
+				  f.HAYsTATEcNG =31;          
           break;
         case 2://in prg
           Serial.println(ipayload);
@@ -61,6 +68,9 @@ void Reqs::processInc(){
 }
 
 void Reqs::pubFlags(){
+  char flags[20];
+  strcpy(flags,cdevid);
+  strcat(flags,"/flags"); 
   StaticJsonBuffer<500> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root["aUTOMA"]=f.aUTOMA;
@@ -74,18 +84,21 @@ void Reqs::pubFlags(){
   root["CKaLARM"]=f.CKaLARM; //11111 assume alarm is set at start
   root["ISrELAYoN"]=f.ISrELAYoN;// = summary of relay states  
   JsonArray& tleft = root.createNestedArray("tIMElEFT");
-  for(int i=0;i<6;i++){
+  for(int i=0;i<5;i++){
     tleft.add(f.tIMElEFT[i]);
   }
   char ast[180];
-  root.printTo(ast, sizeof(ast));  
-  Serial.println(ast);
+  root.printTo(ast, sizeof(ast));
+  clpub(flags,ast);  
 }
 
 void Reqs::creaJson(prg_t& p, char* astr){
-  StaticJsonBuffer<1000> jsonBuffer;
+  StaticJsonBuffer<2000> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root["id"]= p.id;
+  root["aid"] = p.aid;
+  root["ev"] = p.ev;
+  root["numdata"] = p.numdata;
   JsonArray& pro = root.createNestedArray("pro");
   for(int i=0;i<p.ev;i++){
     JsonArray& data = pro.createNestedArray();
@@ -99,35 +112,44 @@ void Reqs::creaJson(prg_t& p, char* astr){
 }
 
 void Reqs::pubPrg(int ck){
+  char sched[20];
+  strcpy(sched,cdevid);
+  strcat(sched,"/sched"); 
+  //Serial.println(prog);	
   if((ck & 1) == 1){
     prg_t p = prgs.temp1;
     char astr[120];
     creaJson(p, astr);
-    Serial.println(astr);
+    //Serial.println(astr);
+    clpub(sched,astr);
   }
   if((ck & 2) == 2){
     prg_t p = prgs.temp2;
     char astr[120];
     creaJson(p, astr);
-    Serial.println(astr);
+    //Serial.println(astr);
+    clpub(sched,astr);
   }
   if((ck & 4) == 4){
     prg_t p = prgs.timr1;
     char astr[120];
     creaJson(p, astr);
-    Serial.println(astr);
+    //Serial.println(astr);
+    clpub(sched,astr);
   }
   if((ck & 8) == 8){
     prg_t p = prgs.timr2;
     char astr[120];
     creaJson(p, astr);
-    Serial.println(astr);
+    //Serial.println(astr);
+    clpub(sched,astr);
   }
   if((ck & 16) == 16){
     prg_t p = prgs.timr3;
     char astr[120];
     creaJson(p, astr);
-    Serial.println(astr);
+    //Serial.println(astr);
+    clpub(sched,astr);
   }
 }
 
@@ -177,11 +199,16 @@ bool Reqs::deseriReq(){
    case 0://`{\"id\":0, \"req\":"srstates"}`
     f.HAYsTATEcNG = 31; 
     break;
-   case 1://\"id\":1, \"req\":"progs"}
-    Serial.println("in desiriReq 1");
+   case 1://\"id\":1, \"req\":"sched"}
+    Serial.println("in desiriReq 1=sched");
+    pubPrg(31);
+    break;
+   case 2://\"id\":2, \"req\":"flags"}
+    Serial.println("in desiriReq 2=flags");
+    pubFlags();
     break;
    default:
-    Serial.println("in default");
+    Serial.println("in desiriReq default");
   }  
 }
 

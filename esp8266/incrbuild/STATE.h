@@ -48,12 +48,12 @@ struct flags_t{
   int HAYsTATEcNG; //11111(31 force report) some state change int or ext
   int CKaLARM; //11111 assume alarm is set at start
   int ISrELAYoN;// = summary of relay states  
-  int tIMElEFT[6];// =[0,0,56,0,0] timeleft in timrs
+  int tIMElEFT[5];// =[0,0,56,0,0] timeleft in timrs
 };
 
 struct prg_t{
   int id;
-  AlarmId aid;
+  AlarmID_t aid;
   int ev;
   int numdata;
   int prg[6][5];//max 6 events [hr,min,max 3 data]

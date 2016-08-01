@@ -21,9 +21,6 @@ void Sched::actTime(){
   Serial.print(hour()); 
   Serial.print(":");  
   Serial.println(minute());
-  f.aUTOMA = 1;  
-  f.CKaLARM = 31; 
-  f.HAYsTATEcNG =31;
 }
 
 bool Sched::deseriTime(){
@@ -44,12 +41,12 @@ void Sched::copyProg(prg_t& t, JsonArray& ev){
   // Serial.println(ev.size());
   for(int h=0;h<ev.size();h++){
     JsonArray& aprg = ev[h];
-    aprg.printTo(Serial);
+    // aprg.printTo(Serial);
     for(int j=0;j<t.numdata+2;j++){
       t.prg[h][j] = aprg[j];
-      Serial.print(t.prg[h][j]);
+      // Serial.print(t.prg[h][j]);
     }
-    Serial.println("");
+    // Serial.println("");
   }        
 }
 
@@ -58,12 +55,11 @@ void Sched::deseriProg(char* kstr){
   StaticJsonBuffer<1000> jsonBuffer;
   JsonObject& rot = jsonBuffer.parseObject(kstr);
   int id = rot["id"];
-  Serial.print("id = ");
-  Serial.println(id);
+  // Serial.print("id = ");
+  // Serial.println(id);
   JsonArray& events = rot["pro"];
   switch(id){
     case 0:
-      Serial.println("in case=0");
       copyProg(prgs.temp1, events);
       f.CKaLARM=f.CKaLARM | 1;          
       break;
@@ -131,67 +127,162 @@ void Sched::setCur(prg_t& p, int &cur, int &nxt){
   }        
 }
 
+// int setTimrAlarm(prg_t& p, timr_t& s){
+//   Alarm.free(p->aid);
+//   int id =2;
+//   int bit =4;
+//   int cur, nxt;
+//   setCur(*p, cur, nxt);
+//   int tleft=0;//initialize
+//   //for timers
+//   s->state = p->prg[cur][2];
+//   f.ISrELAYoN = f.ISrELAYoN | s->state;
+//   if (s->state){ //if relay is on
+//      setTleft(*p, cur, nxt, tleft);
+//      f.IStIMERoN = f.IStIMERoN | bit;
+//   }
+//   f.tIMElEFT[id]=tleft*60;
+//   f.HAYsTATEcNG=f.HAYsTATEcNG | 4;
+//   return nxt;
+// }
+
 void Sched::ckAlarms(){
   if((f.CKaLARM & 1) == 1){
-    prg_t p = prgs.temp1;
-    temp_t s = sr.temp1;
+    prg_t *p = &prgs.temp1;
+    temp_t *s = &sr.temp1;
+    Alarm.free(p->aid);
     int id =0;
     int bit =1;
     int cur, nxt;
-    setCur(p, cur, nxt);
-    Serial.print("cur=");
-    Serial.println(cur);
-    Serial.print("nxt=");
-    Serial.println(nxt);
-    sr.temp1.hilimit = p.prg[cur][2];
-    sr.temp1.lolimit = p.prg[cur][3];
+    setCur(*p, cur, nxt);
+    s->hilimit = p->prg[cur][2];
+    s->lolimit = p->prg[cur][3];
     f.HAYsTATEcNG=f.HAYsTATEcNG | 1;
+    int asec = second()+1;        
+    p->aid = Alarm.alarmOnce(p->prg[nxt][0],p->prg[nxt][1], asec, bm1);
   }
   if((f.CKaLARM & 2) == 2){
-    prg_t p = prgs.temp2;
-    temp_t s = sr.temp2;
+    prg_t *p = &prgs.temp2;
+    temp_t *s = &sr.temp2;
+    Alarm.free(p->aid);
     int id =1;
     int bit =2;
     int cur, nxt;
-    setCur(p, cur, nxt);
-    Serial.print("cur=");
-    Serial.println(cur);
-    Serial.print("nxt=");
-    Serial.println(nxt);
-    sr.temp2.hilimit = p.prg[cur][2];
-    sr.temp2.lolimit = p.prg[cur][3];
+    setCur(*p, cur, nxt);
+    s->hilimit = p->prg[cur][2];
+    s->lolimit = p->prg[cur][3];
     f.HAYsTATEcNG=f.HAYsTATEcNG | 2;
+    int asec = second()+2;        
+    p->aid = Alarm.alarmOnce(p->prg[nxt][0],p->prg[nxt][1], asec, bm2);
+    // Alarm.alarmOnce(p.prg[nxt][0],p.prg[nxt][1], asec, bm2);
   }
   if((f.CKaLARM & 4) == 4){
-    prg_t p = prgs.timr1;
-    timr_t s = sr.timr1;
+    prg_t *p = &prgs.timr1;
+    timr_t *s = &sr.timr1;
+    Alarm.free(p->aid);
     int id =2;
     int bit =4;
     int cur, nxt;
-    setCur(p, cur, nxt);
-    int tleft=0;
+    setCur(*p, cur, nxt);
+    int tleft=0;//initialize
     //for timers
-    s.state = p.prg[cur][2];
-    f.ISrELAYoN = f.ISrELAYoN | s.state;
-    if (s.state){ //if relay is on
-       setTleft(p, cur, nxt, tleft);
+    s->state = p->prg[cur][2];
+    f.ISrELAYoN = f.ISrELAYoN | s->state;
+    if (s->state){ //if relay is on
+       setTleft(*p, cur, nxt, tleft);
        f.IStIMERoN = f.IStIMERoN | bit;
     }
-    f.tIMElEFT[id]=tleft;
-    int asec = second()+1;        
-    //Alarm.alarmOnce(p.prg[nxt][0],p.prg[nxt][1], asec, bm4);
-    int min1 = minute()+1; 
-    Serial.print(hour());
-    Serial.print(":");
-    Serial.print(min1);
-    Serial.print(":");
-    Serial.print(asec);
-    Serial.println(" setting alarm for a minute from now");  
-    Alarm.alarmOnce(hour(),min1, asec, bm4);     
+    f.tIMElEFT[id]=tleft*60;
+    f.HAYsTATEcNG=f.HAYsTATEcNG | 4;
+    int asec = second()+3;        
+    p->aid = Alarm.alarmOnce(p->prg[nxt][0],p->prg[nxt][1], asec, bm4);
+    // int min1 = minute()+1; 
+    // Serial.print(hour());
+    // Serial.print(":");
+    // Serial.print(min1);
+    // Serial.print(":");
+    // Serial.print(asec);
+    // Serial.println(" setting alarm for a minute from now");  
+    // p.aid = Alarm.alarmOnce(hour(),min1, asec, bm4);     
+  }
+  if((f.CKaLARM & 8) == 8){
+    prg_t *p = &prgs.timr2;
+    timr_t *s = &sr.timr2;
+    Alarm.free(p->aid);
+    int id =3;
+    int bit =8;
+    int cur, nxt;
+    setCur(*p, cur, nxt);
+    int tleft=0;//initialize
+    //for timers
+    s->state = p->prg[cur][2];
+    f.ISrELAYoN = f.ISrELAYoN | s->state;
+    if (s->state){ //if relay is on
+       setTleft(*p, cur, nxt, tleft);
+       f.IStIMERoN = f.IStIMERoN | bit;
+    }
+    f.tIMElEFT[id]=tleft*60;
+    f.HAYsTATEcNG=f.HAYsTATEcNG | 4;
+    int asec = second()+3;        
+    p->aid = Alarm.alarmOnce(p->prg[nxt][0],p->prg[nxt][1], asec, bm8);
+  }
+  if((f.CKaLARM & 16) == 16){
+    prg_t *p = &prgs.timr3;
+    timr_t *s = &sr.timr3;
+    Alarm.free(p->aid);
+    int id =4;
+    int bit =16;
+    int cur, nxt;
+    setCur(*p, cur, nxt);
+    int tleft=0;//initialize
+    //for timers
+    s->state = p->prg[cur][2];
+    f.ISrELAYoN = f.ISrELAYoN | s->state;
+    if (s->state){ //if relay is on
+       setTleft(*p, cur, nxt, tleft);
+       f.IStIMERoN = f.IStIMERoN | bit;
+    }
+    f.tIMElEFT[id]=tleft*60;
+    f.HAYsTATEcNG=f.HAYsTATEcNG | 4;
+    int asec = second()+3;        
+    p->aid = Alarm.alarmOnce(p->prg[nxt][0],p->prg[nxt][1], asec, bm16);
   }
 }
 
+void bm1(){
+  f.CKaLARM=f.CKaLARM | 1;
+}
+void bm2(){
+  f.CKaLARM=f.CKaLARM | 2;
+}
 void bm4(){
   Serial.print("timr1 8 begets: ");
   f.CKaLARM=f.CKaLARM | 4;
 }
+void bm8(){
+  f.CKaLARM=f.CKaLARM | 8;
+}
+void bm16(){
+  f.CKaLARM=f.CKaLARM | 16;
+}
+
+void Sched::deductCrement(int id){
+  int mask = 31 - pow(2,id);
+  int t = f.tIMElEFT[id];
+  t = t - f.cREMENT;
+  if(t<=0){
+    t=0;
+    f.IStIMERoN = f.IStIMERoN & mask; //11011
+  }
+  f.tIMElEFT[id] = t;
+}
+
+void Sched::updTimers(){
+  for(int i=0;i<sizeof(f.tIMElEFT);i++){
+    if(f.tIMElEFT[i]>0){
+      deductCrement(i);
+    }
+  }
+}
+
+

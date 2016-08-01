@@ -37,7 +37,7 @@ void MQclient::reconn(PubSubClient& client) {
       strcat(topic,"/"); 
       strcat(topic,la.scribedTo[i]);
       client.subscribe(topic);
-      Serial.println(topic);     
+      //Serial.println(topic);     
     }  
     return;
   } else {
