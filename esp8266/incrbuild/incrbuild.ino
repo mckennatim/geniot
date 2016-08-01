@@ -10,6 +10,7 @@
 #include "Reqs.h"
 #include "Sched.h"
 
+
 Sched sched;
 
 prgs_t prgs {
@@ -19,7 +20,7 @@ prgs_t prgs {
     {3,255,1,1,{{0,0,0}}},
     {4,255,1,1,{{0,0,0}}}
   };
-flags_t f {0,0,5,28,28,0,31,0,0,0,{0,0,0,0,0}};
+flags_t f {0,0,5,28,0,0,31,0,0,0,{0,0,0,0,0}};
 state_t sr {{44,0,80,50},{33,0,90,60},{0},{0},{0}};
 ports_t po {5, 16, 15, 13, 12, 4, 14};
 labels_t la; //subsribedTo[], numcmds
@@ -135,6 +136,7 @@ void loop(){
     schedcrement = inow;
     if (f.IStIMERoN >0){
       sched.updTimers();
+      req.pubTimr();
     }
   }
   if (inow - before > 1000) {

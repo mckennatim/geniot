@@ -3,6 +3,9 @@
 #include <TimeLib.h>
 #include <TimeAlarms.h>
 
+#define sizeOf(a) (sizeof(a) / sizeof(a[0]))
+
+
 struct labels_t {
   static const char* scribedTo[]; 
   static const int numcmds;

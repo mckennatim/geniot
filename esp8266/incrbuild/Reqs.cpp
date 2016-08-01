@@ -92,6 +92,23 @@ void Reqs::pubFlags(){
   clpub(flags,ast);  
 }
 
+void Reqs::pubTimr(){
+  char timr[20];
+  strcpy(timr,cdevid);
+  strcat(timr,"/timr"); 
+  StaticJsonBuffer<500> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root["cREMENT"]=f.cREMENT;
+  root["IStIMERoN"]=f.IStIMERoN;//11100 assume some time left, timers with tleft>0 
+  JsonArray& tleft = root.createNestedArray("tIMElEFT");
+  for(int i=0;i<5;i++){
+    tleft.add(f.tIMElEFT[i]);
+  }
+  char ast[180];
+  root.printTo(ast, sizeof(ast));
+  clpub(timr,ast);  
+}
+
 void Reqs::creaJson(prg_t& p, char* astr){
   StaticJsonBuffer<2000> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();

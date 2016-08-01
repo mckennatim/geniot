@@ -11,6 +11,7 @@ public:
   char* cdevid;
   void stime();
 	void pubFlags();
+	void pubTimr();
 	void pubPrg(int ck);
 	void pubState(int hc);
 	void processInc(); 

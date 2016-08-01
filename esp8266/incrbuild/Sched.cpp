@@ -4,7 +4,9 @@
 #include <ArduinoJson.h>
 #include <TimeLib.h>
 #include <TimeAlarms.h>
+#include "Reqs.h"
 
+extern Reqs req;
 extern flags_t f;
 extern prgs_t prgs;
 extern state_t sr;
@@ -259,7 +261,7 @@ void Sched::deductCrement(int id){
 }
 
 void Sched::updTimers(){
-  for(int i=0;i<5;i++){
+  for(int i=0;i<sizeOf(f.tIMElEFT);i++){
     if(f.tIMElEFT[i]>0){
       deductCrement(i);
     }
