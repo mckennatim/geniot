@@ -18,7 +18,6 @@ public:
 	void deseriProg(char* kstr);
 	void ckAlarms();
 	void actTime();
-	void ckRelays();
 private:
 	void deductCrement(int id);
 	void copyProg(prg_t& t, JsonArray& ev);

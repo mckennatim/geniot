@@ -120,6 +120,17 @@ void setup(){
   client.setCallback(handleCallback); //in Req.cpp
   mq.reconn(client);   
   req.stime();
+  //test payloads
+  // char ipayload1[250] = "{\"id\":0,\"pro\":[[0,0,84,68],[6,30,84,70],[8,15,58,56],[4,15,68,66],[11,33,56,54]]}";
+  // char ipayload2[250] = "{\"id\":1,\"pro\":[[0,0,64,58],[6,0,81,75]]}";
+  // char ipayload3[250] = "{\"id\":2,\"pro\":[[0,0,0],[6,30,1],[8,15,0],[14,20,1],[16,45,0]]}";
+  // char ipayload4[250] = "{\"id\":3,\"pro\":[[0,0,0],[6,30,1],[8,15,0],[14,20,1],[16,45,0]]}";
+  // char ipayload5[250] = "{\"id\":4,\"pro\":[[0,0,0],[6,30,1],[8,15,0],[14,20,1],[16,45,0]]}";  
+  // sched.deseriProg(ipayload1);
+  // sched.deseriProg(ipayload2);
+  // sched.deseriProg(ipayload3);
+  // sched.deseriProg(ipayload4);
+  // sched.deseriProg(ipayload5);
 }
 
 time_t before = 0;
@@ -130,7 +141,7 @@ void loop(){
   Alarm.delay(100);
   server.handleClient();
   if(NEW_MAIL){
-    req.processInc();
+    // req.processInc();
     NEW_MAIL=0;
   }  
   if(!client.connected() && !f.fORCErESET){
@@ -139,30 +150,29 @@ void loop(){
     client.loop();
   }  
   if (f.CKaLARM>0){
-    sched.ckAlarms(); //whatever gets scheduled should publish its update
-    req.pubPrg(f.CKaLARM);
-    req.pubFlags();
-    f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
+    // sched.ckAlarms(); //whatever gets scheduled should publish its update
+    // req.pubPrg(f.CKaLARM);
+    // req.pubFlags();
+    // f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
   }
   inow = millis();
   if(inow-schedcrement > f.cREMENT*1000){
     schedcrement = inow;
     if (f.IStIMERoN >0){
-      sched.updTimers();
-      req.pubTimr();
+      // sched.updTimers();
+      // req.pubTimr();
     }
-    sched.ckRelays();
   }
   if (inow - before > 1000) {
     before = inow;
     if(f.aUTOMA){
-      readTemps();
+      // readTemps();
     }
     if(f.HAYsTATEcNG>0){
       // Serial.print("f.HAYsTATEcNG=");
       // Serial.println(f.HAYsTATEcNG);
       //console.log("example console.log entry");
-      req.pubState(f.HAYsTATEcNG);
+      // req.pubState(f.HAYsTATEcNG);
       f.HAYsTATEcNG=0;
     }
   } 

@@ -8,6 +8,19 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 11.1-geniot-complete
+    void Sched::ckRelays(){
+      //temp relays are checked in readTemps()
+      if(sr.timr1.state != digitalRead(po.timr1)){
+        digitalWrite(po.timr1, sr.timr1.state);
+      }
+      if(sr.timr2.state != digitalRead(po.timr2)){
+        digitalWrite(po.timr2, sr.timr2.state);
+      }
+      if(sr.timr3.state != digitalRead(po.timr3)){
+        digitalWrite(po.timr3, sr.timr3.state);
+      }
+    }
 ### 11-geniot-complete
 but relays on CYURDOO2 (cascada) are not working
 ### 10-reporting-countdown-to-index2

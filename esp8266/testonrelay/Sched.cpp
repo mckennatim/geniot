@@ -9,7 +9,6 @@
 extern Reqs req;
 extern flags_t f;
 extern prgs_t prgs;
-extern ports_t po;
 extern state_t sr;
 extern char ipayload[250];
 
@@ -279,16 +278,4 @@ void Sched::updTimers(){
   }
 }
 
-void Sched::ckRelays(){
-  //temp relays are checked in readTemps()
-  if(sr.timr1.state != digitalRead(po.timr1)){
-    digitalWrite(po.timr1, sr.timr1.state);
-  }
-  if(sr.timr2.state != digitalRead(po.timr2)){
-    digitalWrite(po.timr2, sr.timr2.state);
-  }
-  if(sr.timr3.state != digitalRead(po.timr3)){
-    digitalWrite(po.timr3, sr.timr3.state);
-  }
-}
 
