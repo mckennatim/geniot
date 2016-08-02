@@ -1,10 +1,13 @@
 #include "MQclient.h"
 #include <Arduino.h>
 #include <PubSubClient.h>
+#include "STATE.h"
+
 
 char itopic[40];
 char ipayload[250];
 bool NEW_MAIL=0;
+extern labels_t la;
 
 Console::Console(char* devid, PubSubClient& client ){
   cdevid = devid;
@@ -28,31 +31,14 @@ void MQclient::reconn(PubSubClient& client) {
   Serial.print("Attempting remo MQTT connection...");
   if (client.connect(cdevid)) {
     Serial.println("connected");
-    char cmd[20];
-    strcpy(cmd, cdevid);
-    strcat(cmd,"/cmd");
-    char devtime[25];
-    strcpy(devtime, cdevid);
-    strcat(devtime,"/devtime");
-    char progs[25];//deprecated
-    strcpy(progs, cdevid);
-    strcat(progs,"/progs");
-    char prg[25];
-    strcpy(prg, cdevid);
-    strcat(prg,"/prg");
-    char req[25];
-    strcpy(req, cdevid);
-    strcat(req,"/req");
-    char set[25];
-    strcpy(set, cdevid);
-    strcat(set,"/set");
-    client.subscribe(set);
-    client.subscribe(cmd);
-    client.subscribe(devtime);
-    client.subscribe(progs);//deprecated
-    client.subscribe(prg);
-    client.subscribe(req);
-    Serial.println(progs);
+    for (int i=0;i<la.numcmds;i++){
+      char topic[25];
+      strcpy(topic, cdevid);
+      strcat(topic,"/"); 
+      strcat(topic,la.scribedTo[i]);
+      client.subscribe(topic);
+      //Serial.println(topic);     
+    }  
     return;
   } else {
     Serial.print("failed, rc=");

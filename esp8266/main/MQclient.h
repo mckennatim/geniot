@@ -16,7 +16,6 @@ public:
 	MQclient(char* devid);
   char* cdevid;
 	void reconn(PubSubClient& client);
-	void handleCallback(char* topic, byte* payload, unsigned int length);
 };
 
 extern char itopic[40];

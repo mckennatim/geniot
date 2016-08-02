@@ -19,19 +19,19 @@
 	device: <input type="text" id="idev" value=CYURD0 size="12"onchange="devChanged()">
 	<span  id="temp1"></span><br>
 	roof heater on  ? <span id='lue'></span><br>
-	<input type="text" id="srid" value=0 size="1">
-	<input type="text" id="srda" value=0 size="4">
-	<button id="button" onclick="acmd()">one command</button>
+	<input type="text" id="srid" value=2 size="1">
+	<input type="text" id="srda" value="[0,0,1]" size="12">
+	<button id="button" onclick="acmd()">a hold</button>
 	<button id="button" onclick="aprg()">one prog</button><br>
-	<button id="button" onclick="uclicked()">toggle device</button>
 	<button id="button3" onclick="trigTimeUpd()">trigger time upd</button>
 	<button id="button3" onclick="sendSchedule()">send schedule</button>
 	<button id="button3" onclick="send1Schedule()">send 1 schedule</button><br>
 	Request info from device
 <select id="req" onclick="selChanged()">
   <option value="0" selected="selected">srstates</option>
-  <option value="1" >progs</option>
+  <option value="1" >sched</option>
   <option value="2">flags</option>
+  <option value="3">timr</option>
 </select><br>
 	with timer1 starting in 
 	<input type="text" id="mbox1" value=0 size="2" onchange="mchanged()">
@@ -49,6 +49,7 @@
 		Timer display updates every 
 		<input type="text" id="crement" value=5 size="3" onchange="newCrement()">
 		seconds <br>
+		<button id="button" onclick="uclicked()">toggle aUTOMA</button>
 	for timer 	
 	<input type="text" id="wt" value=1 size="2" > on/off 
 	<input type="text" id="onoff" value=0 size="2" >
@@ -62,6 +63,10 @@
 		var dev = document.getElementById("idev")
 		//const deviceId ='CYURD002'
 		var tmr, progs, cmd, prg, req, trigtime, devtime, sched, client;
+		var oflags={}
+		var osrstate=[];
+		var oprogs=[]
+		var otimr={};
 		function devChanged(){
 			var deviceId = dev.value
 			//publish to device
@@ -73,17 +78,19 @@
 			//subscribe
 			devtime = deviceId +'/devtime'
 			srstate = deviceId+'/srstate'
-			//deprecate
-			tmr = deviceId+'/tmr'
-			progs = deviceId+'/progs'
 			sched = deviceId +'/sched'
+			flags = deviceId+'/flags'
+			//deprecate
+			timr = deviceId+'/timr'
+			// progs = deviceId+'/progs'
 			client = mqtt.connect('ws://162.217.250.109:3333')
 			client.on('connect', function(){
 				console.log('maybe connected')
 				client.subscribe(devtime)//device time
 				client.subscribe(srstate) 
-				client.subscribe(tmr) 
-				client.subscribe(progs)
+				client.subscribe(timr) 
+				client.subscribe(sched)
+				client.subscribe(flags)
 				client.on('message', function(topic, payload) {
 					var pls = payload.toString()
 					var plo = JSON.parse(pls)
@@ -93,20 +100,32 @@
 			    var job = sp[1];	
 			    switch(job){
 			    	case "srstate":
+			    		osrstate[plo.id]=plo.darr;
+			    		console.log(JSON.stringify(osrstate));
 							document.getElementById('lue').innerHTML=plo.heat
 							document.getElementById('temp1').innerHTML=plo.temp1
 							break;
-						case "tmr":
-							document.getElementById('timr1').innerHTML=plo.timr1
-							document.getElementById('timr2').innerHTML=plo.timr2
-							document.getElementById('timr3').innerHTML=plo.timr3
+						case "timr":
+							otimr = plo;
+							console.log(JSON.stringify(otimr));
+							document.getElementById('timr1').innerHTML=plo.tIMElEFT[2]
+							document.getElementById('timr2').innerHTML=plo.tIMElEFT[3]
+							document.getElementById('timr3').innerHTML=plo.tIMElEFT[4]
 							break;
-						case "progs":
-							console.log(plo)
+						case "sched":
+							oprogs[plo.id]=plo;
+							console.log(JSON.stringify(oprogs))
+							break;
+						case "flags":
+							oflags = plo;
+							console.log(JSON.stringify(oflags))
 							break;
 			    }			
 				});	
 				client.publish('presence', 'Web Client is alive.. Test Ping! ');
+				client.publish(req,'{"id":2,"req":"flags"}')
+				client.publish(req,'{"id":0,"req":"srstates"}')
+				client.publish(req,'{"id":1,"req":"progs"}')
 			});			
 		}
 		//var client = mqtt.connect('ws://10.0.1.100:3333')
@@ -138,22 +157,20 @@
 			var arr = str.slice(1,-1).split(',').map(function(e){return parseInt(e)})
 			var thecmd =  `{\"id\":${id}`
 			var sl = str.length
-			if (sl>1){
-				thecmd+=`,\"darr\":[${str}]}`
-			}else if(sl==1){
-				thecmd+= `,\"data\":${str}}`
-			}else{
-				thecmd+='}'
-			}
+			thecmd+=`,\"pro\":[${str}]}`
 			console.log(str)
 			console.log(thecmd);
-			client.publish(cmd, thecmd)
+			client.publish(prg, thecmd)
 		}
 		function aprg(){
-			var thecmd =  `{\"id\":0, \"pro\":[[0,0,0,84,64],[6,30,1,84,70]]}`	
+			var thecmd =  `{\"id\":0,\"pro\":[[0,0,84,82],[6,30,80,79]]}`	
+			var thecmd2 =  `{\"id\":1,\"pro\":[[0,0,79,77],[6,30,78,77]]}`	
+			var thecmd3 =  `{\"id\":2,\"pro\":[[0,0,0],[6,30,1]]}`	
 			console.log(prg)
 			console.log(thecmd)		
 			client.publish(prg, thecmd)
+			client.publish(prg, thecmd2)
+			client.publish(prg, thecmd3)
 		}
 		function pubState(){
 			var id = dreq.options[dreq.selectedIndex].value; 
@@ -227,9 +244,18 @@
 			console.log(`${d22} - ${hr2}:${mi2}`)
 			console.log(`${d31} - ${hr31}:${mi31}`)
 			console.log(`${d32} - ${hr32}:${mi32}`)
-			var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
-			console.log(thecmd);
-			client.publish(sched, thecmd)			
+			//var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],\"progs\":[[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
+			//console.log(thecmd);
+			var thecmd0 =  "{\"id\":0,\"pro\":[[0,0,84,82],[6,30,80,79],["+hr1+","+mi1+",78,77],["+hr31+","+mi31+",83,82]]}"	
+			var thecmd1 =  `{\"id\":1,\"pro\":[[0,0,79,77],[6,30,78,77]]}`	
+			var thecmd2 ="{\"id\":2,\"pro\":[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]]}"
+			var thecmd3 ="{\"id\":3,\"pro\":[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]]}"
+			var thecmd4 ="{\"id\":4,\"pro\":[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]}"
+			client.publish(prg, thecmd0)
+			client.publish(prg, thecmd1)
+			client.publish(prg, thecmd2)
+			client.publish(prg, thecmd3)			
+			client.publish(prg, thecmd4)			
 		}
 		function send1Schedule(){
 			//console.log(v.value);
@@ -328,21 +354,7 @@
 
 
 <pre>
-var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2],\"progs\":
-
-for inputs 0,1
-           0,3 at 1:25pm
-[CYURD002/progs] {"crement":5,"serels":[0,99,1,2,99],"progs":[
-[[0,0,80,77],[6,12,82,75],[8,20,85,78],[13,25,78,74],[13,26,83,79]],
-[[0,0,0],[13,25,1],[13,26,0]],
-[[0,0,0],[13,25,1],[13,28,0]]]}
-
-var thecmd =  "{\"crement\":"+crement+",\"serels\":[0,99,1,2,3],
-\"progs\":[
-[[0,0,80,77],[6,12,82,75],[8,20,85,78],["+hr1+","+mi1+",78,74],["+hr31+","+mi31+",83,79]],
-[[0,0,0],["+hr1+","+mi1+",1],["+hr31+","+mi31+",0]],
-[[0,0,0],["+hr2+","+mi2+",1],["+hr32+","+mi32+",0]],
-[[0,0,0],["+hr3+","+mi3+",1],["+hr33+","+mi33+",0]]]}";
+`${oprogs}`
 </pre>
 <button id="button2" onclick="empty()">empty eeprom</button><br><br>
 

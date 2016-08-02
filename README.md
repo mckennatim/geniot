@@ -8,6 +8,8 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 11-geniot-complete
+but relays on CYURDOO2 (cascada) are not working
 ### 10-reporting-countdown-to-index2
 ### 09-now-w-updTimers-working
 **TODO publish f.tIMElEFT and f.IStIMERoN** on change
@@ -21,11 +23,11 @@ Revived a version that compiles. Sets the state on program change.
 > **ALGO:** boost has a time+setting and a duration ([12,30,68,66],90)
 > - calculate the time at the end of boost
 > - find `cur` for end of boost and replace its time with end boost time 
-> - for HOLDS replace current program with hold value [[0,0,56,54]]
+> - for HOLDS replace current program with hold value [[0,0,56,54]] or [[0,0,1]] and then if nxt==curr don't set timer.
 
 **TODO: cmd and set**
->**CYURD001/cmd** {id:0, setting: [68,66]} - changes `cur` settings [13,15,56,54]->[13,15,68,66], program will regain control at `nxt`
-**CYURD001/set** {cREMENT: 6, aUTOMA: 0, fORCErESET: 1} You can't change: tIMElEFT since ending the timer is a function of ckAlarm() and its callbacks. But instead of sending `srstate` every `cREMENT` seconds you could just send the `tIMElEFT[6]` array?
+>**CYURD001/prg** {id:0, insert new timr into existing program or a single event that takes replaces the program [[00,1]]} - changes `cur` settings [13,15,56,54]->[13,15,68,66], program will regain control at `nxt`.Do it on the client.
+**CYURD001/set** {cREMENT: 6, aUTOMA: 0, fORCErESET: 0} You can't change: tIMElEFT since ending the timer is a function of ckAlarm() and its callbacks. But instead of sending `srstate` every `cREMENT` seconds you could just send the `tIMElEFT[6]` array?
 
 **TODO: updTimers()**
 Currently main.ino does this...
