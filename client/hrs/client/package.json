@@ -1,0 +1,60 @@
+{
+  "name": "hrs-client-server",
+  "version": "0.0.0",
+  "dependencies": {
+    "babel-polyfill": "6.5.0",
+    "color": "0.11.1",
+    "history": "^1.13.1",
+    "immutable": "3.7.6",
+    "isomorphic-fetch": "2.2.1",
+    "radium": "0.16.5",
+    "react": "^0.14.2",
+    "react-dom": "^0.14.2",
+    "react-gmaps": "1.2.2",
+    "react-keypress": "0.1.5",
+    "react-redux": "^4.0.0",
+    "react-router": "^1.0.0",
+    "react-select": "0.9.1",
+    "redux": "^3.0.4",
+    "redux-logger": "2.4.0",
+    "redux-simple-router": "1.0.2",
+    "redux-thunk": "1.0.3",
+    "roboto-font": "0.1.0",
+    "superagent": "1.7.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.1.21",
+    "babel-loader": "^6.2.0",
+    "babel-plugin-transform-class-properties": "6.4.0",
+    "babel-plugin-transform-decorators-legacy": "1.3.4",
+    "babel-plugin-transform-object-assign": "6.5.0",
+    "babel-preset-es2015": "^6.1.18",
+    "babel-preset-react": "^6.1.18",
+    "babel-preset-stage-2": "6.3.13",
+    "chai": "3.4.1",
+    "chai-immutable": "1.5.3",
+    "mocha": "2.3.4",
+    "react-hot-loader": "1.3.0",
+    "webpack": "^1.12.6",
+    "webpack-dev-server": "1.14.1"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "react",
+      "stage-2"
+    ],
+    "plugins": [
+      "transform-class-properties",
+      "transform-decorators-legacy",
+      "transform-object-assign"
+    ]
+  },
+  "scripts": {
+    "deploy": "set NODE_ENV=production && webpack -p --config webpack.production.config.js",
+    "dev": "webpack-dev-server --host 0.0.0.0 --port 3067",
+    "start": "webpack --watch",
+    "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive --slow 4",
+    "test:watch": "npm run test -- --watch"
+  }
+}

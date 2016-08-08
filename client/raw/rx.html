@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1">	
+	<title>rx</title>
+	<script src="./browserMqtt.js"></script>
+	<style type="text/css" media="screen">
+		#temp1 {
+			font-size: 2em;
+		}	
+		span {
+			font-size: 1.4em;
+		}	
+	</style>	
+</head>
+<body>
+	<h1>mqtt->rxjs stream</h1>
+	device: <input type="text" id="idev" value=CYURD0 size="12"onchange="devChanged()">
+	<span  id="temp1"></span><br>
+
+	<script>
+		var dev = document.getElementById("idev")
+		//const deviceId ='CYURD002'
+		var tmr, progs, cmd, prg, req, trigtime, devtime, sched, client;
+		var oflags={}
+		var osrstate=[];
+		var oprogs=[]
+		var otimr={};
+		function devChanged(){
+			var deviceId = dev.value
+			//publish to device
+			prg = deviceId+'/prg'
+			cmd = deviceId +'/cmd'
+			req = deviceId +'/req'
+			//publish to server
+			trigtime = deviceId +'/time'
+			//subscribe
+			devtime = deviceId +'/devtime'
+			srstate = deviceId+'/srstate'
+			sched = deviceId +'/sched'
+			flags = deviceId+'/flags'
+			//deprecate
+			timr = deviceId+'/timr'
+			// progs = deviceId+'/progs'
+			client = mqtt.connect('ws://162.217.250.109:3333')
+			client.on('connect', function(){
+				console.log('maybe connected')
+				client.subscribe(devtime)//device time
+				client.subscribe(srstate) 
+				client.subscribe(timr) 
+				client.subscribe(sched)
+				client.subscribe(flags)
+				client.on('message', function(topic, payload) {
+					var pls = payload.toString()
+					var plo = JSON.parse(pls)
+					//console.log(plo)
+					console.log('['+topic+'] '+payload.toString())
+			    var sp = topic.split("/")
+			    var job = sp[1];	
+			    switch(job){
+			    	case "srstate":
+			    		osrstate[plo.id]=plo.darr;
+							break;
+						case "timr":
+							otimr = plo;
+							break;
+						case "sched":
+							oprogs[plo.id]=plo;
+							break;
+						case "flags":
+							oflags = plo;
+							break;
+			    }			
+				});	
+				client.publish('presence', 'Web Client is alive.. Test Ping! ');
+				client.publish(req,'{"id":2,"req":"flags"}')
+				client.publish(req,'{"id":0,"req":"srstates"}')
+				client.publish(req,'{"id":1,"req":"progs"}')
+				client.publish(req,'{"id":3,"req":"timr"}')
+			});			
+		}
+	</script>
+</body>
+</html>

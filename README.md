@@ -8,7 +8,21 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
-### 11.1-geniot-complete
+### 12-cascada-client-react
+Actually the old react code wont run in the new versions so the current react app that uses geniot/esp8266 is in /c/wamp/www/sbdev0/cascada/client/react.Its repository is git@github.com:mckennatim/cascada-webpack.git. and it is online at http://cascada.sitebuilt.net/cascada/public/#/.
+
+geniot seems pretty stable
+
+Maybe try to build 3 simultaneous front-ends: vanilla,react,angular. What should they do?
+
+Each device should have its own front-end: cascada, geniot, hrs, hvac. What so they have in common?
+
+- some kind of routing
+- a summary page of srstates
++ a detail page for temp_t and timr_t types
+* a program page 
+
+### 11.1-geniot-complete-esp8266
     void Sched::ckRelays(){
       //temp relays are checked in readTemps()
       if(sr.timr1.state != digitalRead(po.timr1)){

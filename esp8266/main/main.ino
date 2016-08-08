@@ -141,7 +141,7 @@ void loop(){
   if (f.CKaLARM>0){
     sched.ckAlarms(); //whatever gets scheduled should publish its update
     req.pubPrg(f.CKaLARM);
-    req.pubFlags();
+    req.pubTimr();
     f.CKaLARM=f.CKaLARM & 0; //11110 turnoff CKaLARM for 1
   }
   inow = millis();

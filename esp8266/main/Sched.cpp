@@ -177,9 +177,12 @@ void Sched::ckAlarms(){
       if (nxt != cur){ //don't countdown allday[[0,0,1]]
         setTleft(*p, cur, nxt, tleft);
         f.IStIMERoN = f.IStIMERoN | bit; //shut off in deductCrement
+      }else{ //shutoff timer if program only is a single ev, hold[[0,0,1]]
+        f.IStIMERoN = f.IStIMERoN & mask;
       }
     }else {
-      f.ISrELAYoN = f.ISrELAYoN & mask;
+      f.ISrELAYoN = f.ISrELAYoN & mask;       
+      f.IStIMERoN = f.IStIMERoN & mask;
     }    
     f.tIMElEFT[id]=tleft*60;
     //end of timer specific code
@@ -204,9 +207,12 @@ void Sched::ckAlarms(){
       if (nxt != cur){ //don't countdown allday[[0,0,1]]
         setTleft(*p, cur, nxt, tleft);
         f.IStIMERoN = f.IStIMERoN | bit; //shut off in deductCrement
+      }else{ //shutoff timer if program only is a single ev, hold[[0,0,1]]
+        f.IStIMERoN = f.IStIMERoN & mask;
       }
     }else {
       f.ISrELAYoN = f.ISrELAYoN & mask;
+      f.IStIMERoN = f.IStIMERoN & mask;
     }    
     f.tIMElEFT[id]=tleft*60;
     //end of timer specific code
@@ -230,10 +236,13 @@ void Sched::ckAlarms(){
       f.ISrELAYoN = f.ISrELAYoN | bit;
       if (nxt != cur){ //don't countdown allday[[0,0,1]]
         setTleft(*p, cur, nxt, tleft);
-        f.IStIMERoN = f.IStIMERoN | bit; //shut off in deductCrement
+        f.IStIMERoN = f.IStIMERoN | bit; //on here, shut off in deductCrement
+      }else{ //shutoff timer if program only is a single ev, hold[[0,0,1]]
+        f.IStIMERoN = f.IStIMERoN & mask;
       }
     }else {
       f.ISrELAYoN = f.ISrELAYoN & mask;
+      f.IStIMERoN = f.IStIMERoN & mask;
     }    
     f.tIMElEFT[id]=tleft*60;
     //end of timer specific code

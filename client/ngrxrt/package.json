@@ -1,0 +1,35 @@
+{
+  "name": "angular2-typescript-webpack",
+  "version": "1.1.0",
+  "description": "ngrx-webpack-ngrxrt",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack-dev-server --host 0.0.0.0 --port 6100",
+    "pretest": "tsc test/*.spec.ts --module commonjs",
+    "test": "mocha --require ./test/test_helper.js --recursive --slow 4",
+    "test:watch": "npm run test -- --watch"    
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "ts-loader": "^0.8.2",
+    "typescript": "^1.8.9",
+    "typings": "^0.8.1",
+    "webpack": "^1.13.0",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "dependencies": {
+    "@angular/common": "2.0.0-rc.1",
+    "@angular/compiler": "2.0.0-rc.1",
+    "@angular/core": "2.0.0-rc.1",
+    "@angular/platform-browser": "2.0.0-rc.1",
+    "@angular/platform-browser-dynamic": "2.0.0-rc.1",
+    "@ngrx/core": "1.0.0",
+    "@ngrx/router": "1.0.0-beta.1",
+    "@ngrx/store": "1.5.0",
+    "es6-promise": "^3.1.2",
+    "es6-shim": "^0.35.0",
+    "reflect-metadata": "0.1.2",
+    "rxjs": "5.0.0-beta.6",
+    "zone.js": "^0.6.12"
+  }
+}
