@@ -1,0 +1,14 @@
+{
+  "name": "rxjsraw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "set NODE_ENV=production && webpack -p --config webpack.production.config.js",
+    "dev": "webpack-dev-server --host 0.0.0.0 --port 3167"
+  },
+  "keywords": [],
+  "author": "Timothy S. McKenna <mckenna.tim@gmail.com> (http://mckennatim.github.io/mckennatim/)",
+  "license": "MIT"
+}

@@ -1,4 +1,4 @@
-# redux/sb/hrs/client
+# sbdev0/geniot/client/hrs/client
 ## notes
 - gmaps needs height and width
 - react component tag names must be capitalized

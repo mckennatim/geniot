@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1"> 
+  <title>webmqtt</title>
+  <script src="./browserMqtt.js"></script>
+<!--  <script src="http://10.0.1.106:1337/vorlon.js"></script>
+ -->    
+</head>
+<body>
+  <h1>read and change devices</h1>
+  <div id="dev"></div>
+  <script>
+    //client = mqtt.connect('wss://sslvh.tm:2013', {rejectUnauthorized: false})
+    client = mqtt.connect('wss://sitebuilt.net:2013')
+    client.on('connect', function(){
+      console.log('maybe connected')
+      client.subscribe('fromBroker')
+      client.subscribe('fromDevice')
+      client.subscribe('fromProxy')
+      client.on('message', function(topic, payload) {
+        console.log('['+topic+'] '+payload.toString())
+      }); 
+      client.publish('presence', 'Web Client is alive.. Test Ping! ');
+      client.publish("fromBrowser",'{"id":2,"req":"flags"}')    
+      setInterval(function () { 
+        client.publish('fromBrowser', 'one message from  web browser')
+      }, 4000); 
+    })
+  </script>
+</body>
+</html>

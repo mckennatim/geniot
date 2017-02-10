@@ -1,6 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
-var node_modules_dir = path.resolve(__dirname, 'node_modules');
+var node_modules_dir = '../../../../node_modules';
 
 var config = {
   entry: {
@@ -11,10 +11,14 @@ var config = {
     path: path.resolve(__dirname, 'dist2'),
     filename: '[name].js' // Notice we use a variable
   },
+  devtool: 'cheap-module-source-map',
   module: {
     loaders: [{
       test: /\.jsx?$/,
-      exclude: [node_modules_dir],
+      exclude: [
+        node_modules_dir,
+        /node_modules/
+      ],
       loader: 'babel'
     }]
   },
@@ -22,7 +26,10 @@ var config = {
     extensions: ['', '.js', '.jsx']
   },
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js')
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify('production')
+    }),
+    new webpack.optimize.UglifyJsPlugin({minimize: true})
   ]
 };
 

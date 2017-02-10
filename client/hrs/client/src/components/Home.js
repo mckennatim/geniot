@@ -22,6 +22,7 @@ function Home({ number, increase, decrease, browser, deviceTypes }) {
     <div style={{display:'flex', flexDirection:'row'}}>
       <div style={{flexGrow:1}}>
         <div style={styles.outer} >
+          <h3> doggy  fd</h3>
           Some state change migh t occur widely:
           <div style={styles.inner}>
             <div>

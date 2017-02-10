@@ -40,9 +40,14 @@ var getTime = function(devid, mosca, cb){
 	console.log("it's 4 oclock")
   console.log(Date.now())
   console.log(typeof(Date.now()))
-  var nynf = parseInt(moment().tz("America/New_York").format("X"))
-  var nyf = moment().tz("America/New_York").format('LLLL')
-  var nyz = parseInt(moment().tz("America/New_York").format('Z'))
+  //var spot="America/Los_Angeles"
+  var spot="America/New_York"
+  var nynf = parseInt(moment().tz(spot).format("X"))
+  var nyf = moment().tz(spot).format('LLLL')
+  var nyz = parseInt(moment().tz(spot).format('Z'))  
+  // var nynf = parseInt(moment().tz("America/New_York").format("X"))
+  // var nyf = moment().tz("America/New_York").format('LLLL')
+  // var nyz = parseInt(moment().tz("America/New_York").format('Z'))
   var pkt = {
   	unix: nynf,
   	LLLL: nyf,

@@ -2,7 +2,7 @@ var Device = require('../lib/db/devices.js')
 var User = require('../lib/db/user.js')
 var expect = require('chai').expect
 var mongoose = require('mongoose');
-var env = require('../env.json')
+var env = require('../../env.json')
 var cfg= env[process.env.NODE_ENV||'development']
 var db = cfg.db
 

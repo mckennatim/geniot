@@ -8,6 +8,15 @@ A combination of cascada-mqtt and demiot. This one has the server. Its purpose i
 [alt m] open in browser when you open the readme. Then, it should autoupdate on a save once you refresh the browser. This is because livereload is on in Windows with the C:/users/tim/appdata/local/temp/ directory added. There is also a Chrome livereload plugin installed. On sublime there is [markdown-preview](https://github.com/revolunet/sublimetext-markdown-preview) <s>and [markdownTOC](https://github.com/naokazuterada/MarkdownTOC) installed
 [alt-c] tools/MarkdownTOC/update</s>
 ## tags
+### 13_esp8266-hp-pi-sb_client-raw-Hp-Sb
+17/10/10
+server either 
+webclient: `wss://services.sitebuilt.net/geniot/ws/`
+main.ino: `mqtt_server = "10.0.1.100";` `mport = 1883;`
+or
+webclient: `wss://sslvh.tm:8443`
+main.ino: `mqtt_server = "sitebuilt.net";` `mport = 1883;`
+
 ### 12-cascada-client-react
 Actually the old react code wont run in the new versions so the current react app that uses geniot/esp8266 is in /c/wamp/www/sbdev0/cascada/client/react.Its repository is git@github.com:mckennatim/cascada-webpack.git. and it is online at http://cascada.sitebuilt.net/cascada/public/#/.
 

@@ -57,23 +57,26 @@ var mq = {
   },
   processIncoming: function(payload){
     switch(this.job){
-      case "dog":
-        console.log("dog")
-        break
       case "cmd":
-        console.log("cmd")
+        //console.log("cmd")
         break
       case "time":
         console.log("time")
         sched.getTime(this.devid, moserver)
         break
       case "sched":
-        console.log("sched")
-        sched.sendSchedule(this.devid, moserver, payload)
+        //console.log("sched")
+        //sched.sendSchedule(this.devid, moserver, payload)
         break
       case "srstate":
-        console.log("srstate")
+        ;//console.log("srstate")
+        break      
+      case "dog":
+        //console.log("dog")
         break
+      default:
+        //console.log("in default")  
+        //console.log(this.job)  
     }
   },
   job: '',

@@ -1,5 +1,5 @@
 var mosca = require('mosca')
-var env = require('../../../env.json')
+var env = require('../../env.json')
 var cfg= env[process.env.NODE_ENV||'development']
 var currentPacket;
 

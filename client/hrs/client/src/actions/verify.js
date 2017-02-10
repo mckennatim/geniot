@@ -86,7 +86,7 @@ const postUnverReq =(done)=>{
 
 const fetchUnverified = () => {
 	return dispatch => {
-	  const url = `http://10.0.1.104:3036/api/hrs/verify-addr`
+	  const url = `http://10.0.1.102:3036/api/hrs/verify-addr`
 	  //console.log(url)
 	  return fetch(url)
 	    .then(response => response.json()) //same as function(response){return response.json()}
@@ -102,7 +102,7 @@ const fetchUnverified = () => {
 
 const fetchVerified = () => {
 	return dispatch => {
-	  const url = `http://10.0.1.104:3036/api/hrs/verify-addr/ver`
+	  const url = `http://10.0.1.102:3036/api/hrs/verify-addr/ver`
 	  //console.log(url)
 	  return fetch(url)
 	    .then(response => response.json()) //same as function(response){return response.json()}
@@ -137,7 +137,7 @@ const postUnverified =(unver_sel)=>{
 		body.veri =1
 		console.log(id)
 		console.log(body)
-		const url = `http://10.0.1.104:3036/api/hrs/verify-addr/`+id
+		const url = `http://10.0.1.102:3036/api/hrs/verify-addr/`+id
 		return superagent
 			.put(url)
 			.send(body)

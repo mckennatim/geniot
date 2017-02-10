@@ -2,9 +2,14 @@ import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 import createLogger from 'redux-logger'
 import rootReducer from '../reducers'
+import { routerMiddleware} from 'react-router-redux'
+import { browserHistory } from 'react-router'
+
+const rtMiddleware = routerMiddleware(browserHistory)
 
 const createStoreWithMiddleware = applyMiddleware(
   thunkMiddleware,
+  rtMiddleware,
   createLogger()
 )(createStore)
 

@@ -4,7 +4,7 @@ var should = require('should')
 var _ = require('underscore')
 var jwt = require('jwt-simple');
 var fs = require('fs');
-var env = require('../env.json')
+var env = require('../../env.json')
 var cfg= env[process.env.NODE_ENV||'development']
 var secret = cfg.secret
 
